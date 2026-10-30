@@ -4,3 +4,12 @@
 
 /* 字段对照独立滚动，长参数与移动端不撑开页面。 */
 .result-comparison{margin-top:16px}.comparison-update,.comparison-status{margin:12px 16px;font-size:12px;overflow-wrap:anywhere}.comparison-status{color:var(--teal)}.comparison-table-wrap{max-height:360px;overflow:auto;margin:0 16px 16px}.comparison-table{border-collapse:collapse;width:100%;font-size:11px;text-align:left;table-layout:fixed}.comparison-table th,.comparison-table td{padding:9px;border:1px solid var(--border);vertical-align:top;overflow-wrap:anywhere}.comparison-table th{background:var(--paper);position:sticky;top:0}.comparison-table pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:0;font:11px/1.6 var(--mono)}.comparison-table code{font-size:10px}.result-comparison>details>.code{max-height:480px;overflow:auto;padding:16px;margin:0;background:#111e2b}.result-comparison summary{cursor:pointer}@media(max-width:760px){.comparison-table{min-width:600px}}
+
+/* 三列直接对照当前事件、累积对象与固定结果，窄屏按阅读顺序堆叠。 */
+@media(min-width:761px){.workbench{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.final-result-body{padding:13px 14px}.final-result-code{background:#111e2b;border-radius:7px}.final-result-code .code{padding:12px;max-height:570px;font-size:10px}
+.event-row-title{white-space:normal;overflow-wrap:anywhere;font-family:var(--mono);line-height:1.6}
+.inspector-head{flex-wrap:wrap}.inspector-head #source-title{min-width:0;overflow-wrap:anywhere}
+.compare-type-count span{min-width:0;overflow-wrap:anywhere}
+
+@media(min-width:761px){.workbench>.panel>.panel-description{min-height:54px}.snapshot-body>.snapshot-json-label,.final-result-body>.snapshot-json-label{min-height:34px}}
