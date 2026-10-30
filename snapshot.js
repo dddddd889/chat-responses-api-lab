@@ -134,28 +134,30 @@
     return {rows,oldCount:oldLines.length,newCount:newLines.length};
   }
 
-  // Git 风格整文件差异：减号为本条处理前的行，加号为本条处理后的行。
-  function renderDiff(scene, snapshot) {
-    const previousStep = Math.max(0,snapshot.step-1);
-    const diff = diffLines(object(scene,{step:previousStep}),object(scene,snapshot));
+  // 两种差异视图共用同一套行对齐，标题明确指出比较方向。
+  function renderLineDiff(before, after, beforeName, afterName, label) {
+    const diff = diffLines(before,after);
     const added = diff.rows.filter(row => row.kind === 'add').length;
     const deleted = diff.rows.filter(row => row.kind === 'delete').length;
-    const header = `--- SSE #${previousStep}\n+++ SSE #${snapshot.step}\n@@ -1,${diff.oldCount} +1,${diff.newCount} @@`;
+    const header = `--- ${beforeName}\n+++ ${afterName}\n@@ -1,${diff.oldCount} +1,${diff.newCount} @@`;
     const rows = diff.rows.map(row => `<span class="diff-line diff-${row.kind}"><span class="diff-marker">${row.kind === 'add' ? '+' : row.kind === 'delete' ? '-' : ' '}</span>${C.highlight(row.text)}</span>`).join('\n');
-    return `<div class="snapshot-json-label">SSE #${previousStep} → #${snapshot.step} · <span class="diff-added-count">+${added} 行</span> / <span class="diff-deleted-count">−${deleted} 行</span><br>红色 − 处理前 · 绿色 + 处理后${added || deleted ? '' : ' · 本条无字段变化'}</div><div class="snapshot-json snapshot-diff"><pre class="code" tabindex="0" aria-label="拼接状态 Git diff"><span class="diff-header">${C.escapeHTML(header)}</span>\n${rows}</pre></div>`;
+    return `<div class="snapshot-json-label">${C.escapeHTML(beforeName)} → ${C.escapeHTML(afterName)} · <span class="diff-added-count">+${added} 行</span> / <span class="diff-deleted-count">−${deleted} 行</span></div><div class="snapshot-json snapshot-diff"><pre class="code" tabindex="0" aria-label="${C.escapeHTML(label)}"><span class="diff-header">${C.escapeHTML(header)}</span>\n${rows}</pre></div>`;
   }
 
-  // 展示本条 SSE 的处理前后值；与日志终点的比较单独保留为状态提示。
-  function comparison(scene, snapshot) {
-    const current = object(scene,snapshot);
-    const previous = object(scene,{step:Math.max(0,snapshot.step-1)});
-    const changes = snapshot.step ? differences(previous,current) : [];
-    const diffs = differences(current,scene.result.object);
-    const value = item => item === undefined ? '尚无此字段' : C.pretty(item);
-    const updated = changes.length ? changes.map(change => `<code>${C.escapeHTML(change.path)}</code>`).join('、') : '本条没有更新已建模字段（可能是结束标记或扩展事件）';
-    const rows = changes.map(diff => `<tr class="comparison-changed"><td><code>${C.escapeHTML(diff.path)}</code></td><td class="change-before"><pre>${C.escapeHTML(value(diff.current))}</pre></td><td class="change-after"><pre>${C.escapeHTML(value(diff.final))}</pre></td></tr>`).join('');
-    return `<p class="comparison-update">${snapshot.step ? `SSE #${snapshot.step} 更新` : '尚未接收事件'}：${snapshot.step ? updated : '选择事件，观察字段逐步补全。'}</p><p class="comparison-status" role="status">${diffs.length ? `当前累积对象与右侧完整结果有 ${diffs.length} 处差异${snapshot.step === snapshot.max ? '，请检查终点结果' : '，继续接收事件后对照'}` : '逐字段一致：当前累积对象与日志完整结果相同'}</p>${changes.length ? `<div class="comparison-table-wrap"><table class="comparison-table"><thead><tr><th>字段路径</th><th>本条处理前</th><th>本条处理后</th></tr></thead><tbody>${rows}</tbody></table></div>` : ''}`;
+  // 中间列比较相邻事件，显示本条 SSE 带来的变化。
+  function renderDiff(scene, snapshot) {
+    const previousStep = Math.max(0,snapshot.step-1);
+    return renderLineDiff(object(scene,{step:previousStep}),object(scene,snapshot),`SSE #${previousStep}`,`SSE #${snapshot.step}`,'拼接状态 Git diff');
   }
 
-  window.StreamSnapshotView = {object,render,renderDiff,diffLines,comparison,differences,toggleLabel,copyLabel:'复制当前累积对象 JSON'};
+  // 右列比较当前累积对象和固定日志终点；仅差异随进度变化，原始日志不被修改。
+  function renderResult(scene, snapshot, mode='diff') {
+    const current = object(scene,snapshot), final = scene.result.object;
+    const diffs = differences(current,final);
+    const status = `<div class="result-match" role="status">${diffs.length ? `距日志终点还有 ${diffs.length} 处字段差异` : '逐字段一致：当前状态已达到日志终点'}</div>`;
+    if (mode === 'json') return status+`<div class="snapshot-json-label">日志完整结果 · 固定原文</div><div class="final-result-code"><pre class="code" tabindex="0" aria-label="日志完整结果 JSON">${C.highlight(C.pretty(final))}</pre></div>`;
+    return status+renderLineDiff(current,final,`当前 SSE #${snapshot.step}`,'日志完整结果','完整结果 Git diff');
+  }
+
+  window.StreamSnapshotView = {object,render,renderDiff,diffLines,renderLineDiff,renderResult,differences,toggleLabel,copyLabel:'复制当前累积对象 JSON'};
 })();
