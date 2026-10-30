@@ -41,7 +41,7 @@ async function open(id,t,view='json') {
 }
 
 for (const scene of meta.scenarios) {
-  test(`${scene.id}：页面实际渲染与三列对照`,{skip:!modulePath},async t => {
+  test(`${scene.id}：页面实际渲染与三块对照`,{skip:!modulePath},async t => {
     const dom = await open(scene.id,t), document = dom.window.document;
     const prepared = C.prepare(scene);
     assert.ok(document.querySelector('h1').textContent.includes(scene.title));
