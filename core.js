@@ -60,7 +60,7 @@
   function snapshot(scenario, cursor) {
     const max = scenario.sse.length;
     const step = Math.max(0, Math.min(max, Number(cursor) || 0));
-    const state = {step,max,text:'',refusal:'',reasoning:'',tools:[],usage:null,status:'waiting',finish:'',authoritative:false};
+    const state = {step,max,text:'',refusal:'',reasoning:'',tools:[],usage:null,status:'waiting',finish:''};
     if (scenario.httpError) return {...state,status:'http_error',error:scenario.httpError.object};
     if (!step) return state;
     state.status = 'streaming';
@@ -110,10 +110,7 @@
       for (const [key,value] of parts) { if (key.endsWith('refusal')) state.refusal += value; else state.text += value; }
     }
     state.tools = [...tools.values()].sort((a,b) => a.choice-b.choice || a.index-b.index);
-    if (step === max && scenario.result) {
-      const final = finalView(scenario);
-      Object.assign(state,{text:final.text,refusal:final.refusal,tools:final.tools,usage:final.usage,finish:final.finish || state.finish,status:final.status,authoritative:true});
-    } else if (transportDone && state.status === 'streaming') state.status = state.finish === 'length' ? 'truncated' : 'complete';
+    if (transportDone && state.status === 'streaming') state.status = state.finish === 'length' ? 'truncated' : 'complete';
     return state;
   }
 
