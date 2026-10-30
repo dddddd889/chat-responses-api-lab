@@ -15,7 +15,7 @@
   const counterpart = scenes.find(item => item.kind === scene.kind && item.protocol !== scene.protocol);
   const params = new URLSearchParams(location.search);
   const app = document.getElementById('app');
-  const state = {cursor:params.has('step') ? Math.max(0,Math.min(scene.sse.length,Number(params.get('step')) || 0)) : scene.sse.length, tab:['replay','journey','compare','result'].includes(params.get('tab')) ? params.get('tab') : 'replay', journeyStage:J.stages.some(stage => stage.id === params.get('stage')) ? params.get('stage') : 'eventlog', journeyTool:params.get('call'), filter:'all', search:'', sourceMode:'json', resultMode:params.get('result_view') === 'diff' ? 'diff' : 'json', snapshotMode:['json','visual','diff'].includes(params.get('view')) ? params.get('view') : 'diff', playing:false, interval:650, timer:null};
+  const state = {cursor:params.has('step') ? Math.max(0,Math.min(scene.sse.length,Math.trunc(Number(params.get('step'))) || 0)) : scene.sse.length, tab:['replay','journey','compare','result'].includes(params.get('tab')) ? params.get('tab') : 'replay', journeyStage:J.stages.some(stage => stage.id === params.get('stage')) ? params.get('stage') : 'eventlog', journeyTool:params.get('call'), filter:'all', search:'', sourceMode:params.get('source') === 'frame' ? 'frame' : 'json', resultMode:params.get('result_view') === 'diff' ? 'diff' : 'json', snapshotMode:['json','visual','diff'].includes(params.get('view')) ? params.get('view') : 'diff', playing:false, interval:650, timer:null};
   let toastTimer;
   const icon = (name,size=15) => {
     const paths = {play:'<path d="m8 5 11 7-11 7Z"/>',pause:'<path d="M8 5v14M16 5v14"/>',back:'<path d="M6 5v14m12-14L8 12l10 7Z"/>',prev:'<path d="m15 5-7 7 7 7"/>',next:'<path d="m9 5 7 7-7 7"/>',code:'<path d="m8 6-6 6 6 6m8-12 6 6-6 6m-5 2 2-16"/>',flow:'<rect x="3" y="4" width="6" height="5" rx="1"/><rect x="15" y="15" width="6" height="5" rx="1"/><path d="M6 9v8h9m-1-4 4 4-4 4"/>',braces:'<path d="M9 3H7v6l-3 3 3 3v6h2m6-18h2v6l3 3-3 3v6h-2"/>',copy:'<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M15 8V3H3v12h5"/>',download:'<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',compare:'<path d="M12 3v18M4 7h4v10H4M16 7h4v10h-4"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/>',check:'<path d="m5 12 4 4L19 6"/>',link:'<path d="m10 13 4-4m-6 7-2 2a4 4 0 0 1-6-6l5-5a4 4 0 0 1 6 0m2 1 2-2a4 4 0 0 1 6 6l-5 5a4 4 0 0 1-6 0"/>'};
@@ -81,7 +81,7 @@
       <section id="pane-compare" role="tabpanel" aria-labelledby="tab-compare" hidden>${renderCompare()}</section>
       <section id="pane-result" role="tabpanel" aria-labelledby="tab-result" hidden>${renderResult()}</section>
       <footer class="page-footer"><div>真实样本 · ${dataset.model} · 所有交互均在浏览器内进行</div><div class="footer-actions"><button data-action="copy-link">${icon('link',11)} 复制当前视图链接</button><button data-action="download" data-content="combined">${icon('download',11)} 下载完整日志</button></div></footer>`;
-    selectTab(state.tab);
+    selectTab(state.tab,'replace');
     if (!isError) renderPlayback();
   }
 
@@ -169,8 +169,25 @@
     return `${record.event && record.event !== 'message' ? `event: ${record.event}\n` : ''}${record.id ? `id: ${record.id}\n` : ''}${payload.split('\n').map(line => `data: ${line}`).join('\n')}\n\n`;
   }
 
-  function selectTab(tab) {
+  // 地址保存页面状态；切换标签/阶段新增历史，连续回放只更新当前历史。
+  function routeURL() {
+    const url = new URL(location.href);
+    for (const [key,value] of Object.entries({tab:state.tab,step:state.cursor,stage:state.journeyStage,view:state.snapshotMode,result_view:state.resultMode,source:state.sourceMode})) url.searchParams.set(key,value);
+    if (state.journeyTool) url.searchParams.set('call',state.journeyTool);
+    else url.searchParams.delete('call');
+    return url;
+  }
+
+  // 共享给地址栏和复制链接，避免两套序列化规则不一致。
+  function syncRoute(mode='replace') {
+    if (mode === 'none') return;
+    const url = routeURL();
+    if (url.href !== location.href) history[mode === 'push' ? 'pushState' : 'replaceState'](null,'',url.href);
+  }
+
+  function selectTab(tab, historyMode='push') {
     state.tab = tab;
+    syncRoute(historyMode);
     if (tab !== 'replay') stopPlayback();
     for (const name of ['replay','journey','compare','result']) {
       const button = document.getElementById(`tab-${name}`);
@@ -181,6 +198,7 @@
 
   function setCursor(value) {
     state.cursor = Math.max(0,Math.min(scene.sse.length,Number(value) || 0));
+    syncRoute();
     if (state.cursor === scene.sse.length) stopPlayback();
     if (!scene.httpError) renderPlayback();
   }
@@ -247,6 +265,7 @@
     if (action === 'journey-stage' || action === 'journey-tool') {
       if (action === 'journey-stage') state.journeyStage = button.dataset.stage;
       else state.journeyTool = button.dataset.tool;
+      syncRoute('push');
       document.getElementById('pane-journey').innerHTML = J.render(scene,state.journeyStage,state.journeyTool);
       // 重绘后恢复到相同的阶段或调用按钮，保持键盘操作连续。
       const selected = [...document.querySelectorAll(`#pane-journey [data-action="${action}"]`)].find(item => action === 'journey-stage' ? item.dataset.stage === state.journeyStage : item.dataset.tool === state.journeyTool);
@@ -258,14 +277,14 @@
     if (action === 'prev') {stopPlayback();setCursor(state.cursor-1);}
     if (action === 'next') {stopPlayback();setCursor(state.cursor+1);}
     if (action === 'jump') {stopPlayback();setCursor(button.dataset.index);}
-    if (action === 'result-mode') {state.resultMode = state.resultMode === 'diff' ? 'json' : 'diff';renderPlayback();}
-    if (action === 'snapshot-diff') {state.snapshotMode = state.snapshotMode === 'diff' ? 'json' : 'diff';renderPlayback();}
-    if (action === 'snapshot-mode') {state.snapshotMode = state.snapshotMode === 'json' ? 'visual' : 'json';renderPlayback();}
-    if (action === 'source-mode') {state.sourceMode = state.sourceMode === 'json' ? 'frame' : 'json';renderPlayback();}
+    if (action === 'result-mode') {state.resultMode = state.resultMode === 'diff' ? 'json' : 'diff';renderPlayback();syncRoute();}
+    if (action === 'snapshot-diff') {state.snapshotMode = state.snapshotMode === 'diff' ? 'json' : 'diff';renderPlayback();syncRoute();}
+    if (action === 'snapshot-mode') {state.snapshotMode = state.snapshotMode === 'json' ? 'visual' : 'json';renderPlayback();syncRoute();}
+    if (action === 'source-mode') {state.sourceMode = state.sourceMode === 'json' ? 'frame' : 'json';renderPlayback();syncRoute();}
     if (action === 'copy') copy(content(button.dataset.content).text);
     if (action === 'download') download(button.dataset.content);
     if (action === 'copy-link') {
-      const url = new URL(location.href);url.searchParams.set('step',state.cursor);url.searchParams.set('tab',state.tab);url.searchParams.set('view',state.snapshotMode);url.searchParams.set('result_view',state.resultMode);url.searchParams.set('stage',state.journeyStage);if (state.journeyTool) url.searchParams.set('call',state.journeyTool);copy(url.href);
+      copy(routeURL().href);
     }
   });
   document.getElementById('scenario-search').addEventListener('input',event => {state.search = event.target.value;renderNav();});
@@ -278,6 +297,21 @@
     }
     if (state.tab !== 'replay' || scene.httpError || event.target.closest('input,textarea,select,button,a,summary')) return;
     if (['ArrowLeft','ArrowRight'].includes(event.key)) {event.preventDefault();stopPlayback();setCursor(state.cursor+(event.key === 'ArrowRight' ? 1 : -1));}
+  });
+  // 浏览器前进后退恢复界面；不继续自动播放，也不产生额外历史。
+  window.addEventListener('popstate',() => {
+    stopPlayback();
+    const route = new URLSearchParams(location.search);
+    state.cursor = route.has('step') ? Math.max(0,Math.min(scene.sse.length,Math.trunc(Number(route.get('step'))) || 0)) : scene.sse.length;
+    state.tab = ['replay','journey','compare','result'].includes(route.get('tab')) ? route.get('tab') : 'replay';
+    state.journeyStage = J.stages.some(stage => stage.id === route.get('stage')) ? route.get('stage') : 'eventlog';
+    state.journeyTool = route.get('call');
+    state.snapshotMode = ['json','visual','diff'].includes(route.get('view')) ? route.get('view') : 'diff';
+    state.resultMode = route.get('result_view') === 'diff' ? 'diff' : 'json';
+    state.sourceMode = route.get('source') === 'frame' ? 'frame' : 'json';
+    document.getElementById('pane-journey').innerHTML = J.render(scene,state.journeyStage,state.journeyTool);
+    selectTab(state.tab,'none');
+    if (!scene.httpError) renderPlayback();
   });
   window.addEventListener('pagehide',stopPlayback);
   renderNav();renderScene();
