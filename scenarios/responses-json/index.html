@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta http-equiv="Content-Security-Policy" content="connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>结构化 JSON · responses · SSE 流观察室</title>
+  <meta name="description" content="交互查看 14 个 DeepSeek 真实请求场景，从逐条 SSE JSON 到完整工具参数、usage 与统一业务事件。">
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+  <link rel="stylesheet" href="../../styles.css">
+  <script defer src="../../data.js"></script>
+  <script defer src="../../core.js"></script>
+  <script defer src="../../usage.js"></script>
+  <script defer src="../../snapshot.js"></script>
+  <script defer src="../../app.js"></script>
+</head>
+<body data-base="../../" data-scenario="responses-json">
+  <div class="app-shell" id="app">
+    <aside class="sidebar">
+      <a class="brand" href="../../index.html" aria-label="SSE 流观察室首页"><span class="brand-mark">s<span>↗</span></span><span>Stream Lab<small>SSE 流观察室</small></span></a>
+      <div class="dataset-label"><span class="live-dot"></span>真实请求样本<span class="dataset-count">14</span></div>
+      <label class="search-box"><span aria-hidden="true">⌕</span><input id="scenario-search" type="search" placeholder="搜索场景或关键词" aria-label="搜索场景"></label>
+      <div class="filter-group" aria-label="按接口筛选"><button data-filter="all" class="active">全部</button><button data-filter="chat">Chat</button><button data-filter="responses">Responses</button></div>
+      <nav id="scenario-nav" aria-label="真实请求场景"></nav>
+      <footer class="sidebar-footer"><span class="source-mark">◈</span><div>DEEPSEEK · 实测数据<small id="dataset-meta">正在载入日志…</small></div></footer>
+    </aside>
+    <main id="main" class="main"><div class="loading"><span class="loading-orbit"></span>正在打开真实事件流…</div></main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <noscript>这个站点使用浏览器内的 JavaScript 展示交互日志，请启用 JavaScript。页面不会调用模型或发送网络请求。</noscript>
+</body>
+</html>
