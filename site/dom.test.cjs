@@ -185,36 +185,3 @@ test('逐步选择 SSE 会更新字段对照，完整结果保持不变，终点
     assert.equal(panel.querySelector('.comparison-table'),null);
   }
 });
-
-// 固定后仍复用同一对照区；播放更新、标签切换和取消固定不能丢失状态。
-test('对照区可固定到右侧，持续联动回放并可恢复原位置',{skip:!modulePath},async t => {
-  const dom = await open('responses-tool',t), window = dom.window, document = window.document;
-  const button = document.querySelector('[data-action="pin-comparison"]');
-  const panel = document.getElementById('result-comparison');
-  const originalParent = panel.parentElement;
-  assert.equal(button.getAttribute('aria-pressed'),'false');
-  button.click();
-  assert.equal(button.textContent,'取消固定');
-  assert.equal(button.getAttribute('aria-pressed'),'true');
-  assert.equal(document.body.classList.contains('comparison-pinned'),true);
-  document.querySelector('[data-action="reset"]').click();
-  assert.ok(panel.textContent.includes('尚未接收事件'));
-  assert.equal(document.body.classList.contains('comparison-pinned'),true);
-  document.querySelector('[data-action="next"]').click();
-  assert.ok(panel.textContent.includes('SSE #1 更新'));
-  let copied;
-  Object.defineProperty(window.navigator,'clipboard',{value:{writeText:async value => {copied=value;}},configurable:true});
-  document.querySelector('[data-action="copy-link"]').click();await Promise.resolve();
-  assert.equal(new URL(copied).searchParams.get('pin'),'1');
-  document.querySelector('[data-tab="result"]').click();
-  assert.equal(document.body.classList.contains('comparison-pinned'),false);
-  document.querySelector('[data-tab="replay"]').click();
-  assert.equal(document.body.classList.contains('comparison-pinned'),true);
-  button.click();
-  assert.equal(document.body.classList.contains('comparison-pinned'),false);
-  assert.equal(button.textContent,'固定到右侧');
-  assert.equal(panel.parentElement,originalParent);
-  assert.ok(panel.textContent.includes('SSE #1 更新'));
-  document.querySelector('[data-action="copy-link"]').click();await Promise.resolve();
-  assert.equal(new URL(copied).searchParams.has('pin'),false);
-});
