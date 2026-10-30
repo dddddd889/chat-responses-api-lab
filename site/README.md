@@ -69,3 +69,5 @@ Chat 的 `reasoning_content` 是提供方扩展字段，逐条追加；Responses
 参考：[Harness 适配器](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/packages/llm/llm-pi-ai/src/stream.ts)、[OpenAI Responses 流事件](https://developers.openai.com/api/reference/resources/responses/streaming-events#response.reasoning_text.delta)。
 
 用量来源：回放两栏的 usage 仅来自当前进度已经收到的上游事件，未收到时保持 null。右栏标出用量来源的 SSE 序号。顶部概览、字段说明和“完整结果”标签页明确标为日志终点数据，不随回放变化。
+
+完整过程当前只演示工具调用链路。无工具场景仍保留真实模型响应，其余阶段标明不适用，并说明正文/推理转换尚未实现展示；不把未实现展示冒充空运行记录。

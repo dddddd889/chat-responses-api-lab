@@ -70,9 +70,14 @@
     return `<p class="journey-description">请求 1：本场景已保存的 API 响应。此处读取完整样本，独立于逐步回放游标。</p>${code(data.selected ? '选中调用 · 真实 API 数据' : '完整结果 · 真实 API 数据',data.selected ? data.upstream : scene.result.object)}<button class="outline-btn" data-action="journey-replay" data-index="${jump}">定位上游 SSE #${jump}</button><p class="journey-note">${e(scene.protocol === 'chat' ? '日志中的 ChatResult 是项目累积器结构，choices/tool_calls 以编号为键。' : '此对象是项目 Go ResponseObject 已建模字段；完整上游 JSON 可在 SSE 检查器查看。')}</p>`;
   }
 
+  // 无工具调用时明确说明适用范围，不把不存在的阶段展示成空对象。
+  function unavailable(data) {
+    return `<div class="journey-empty"><strong>${data.selected ? '本次响应不满足转换演示条件' : '不适用：本场景没有工具调用'}</strong><p>${e(data.blocked)}</p><p>此页目前只实现工具调用链路的结构演示。正文与推理的适配、会话写入尚未实现展示，不代表它们在真实 Harness 中为空。可切换“单工具调用”或“双工具调用”场景查看已有演示。</p></div>`;
+  }
+
   // 展示工具块的类型与参数表示转换，不伪造完整 pi-ai 消息或流式运行记录。
   function adapterStage(scene, data) {
-    if (data.blocked) return `<div class="journey-empty">${e(data.blocked)}</div>`;
+    if (data.blocked) return unavailable(data);
     const index = data.selectedIndex;
     const pi = data.piBlocks[index], block = data.harnessBlocks[index];
     return `<p class="journey-description">源码结构演示：适配器边接收 pi-ai 事件边转换，不需要等待整份消息完成。本例只展示工具块片段，index 是片段内的演示索引。</p><div class="journey-pair">${code('pi-ai · toolcall_end 片段',{type:'toolcall_end',contentIndex:index,toolCall:pi},'pi-ai 工具结束事件片段')}${code('Harness · block-end',{type:'block-end',index,block},'Harness 工具块结束事件')}</div><table class="journey-mapping"><thead><tr><th>变化</th><th>pi-ai</th><th>Harness</th></tr></thead><tbody><tr><td>工具类型</td><td><code>toolCall</code></td><td><code>tool-call</code></td></tr><tr><td>参数类型</td><td>对象</td><td>JSON 字符串</td></tr><tr><td>调用 ID</td><td colspan="2"><code>${e(pi.id)}</code> 保持关联</td></tr></tbody></table><p class="journey-note">JSON.stringify 会重新编码参数，空格和转义写法可能与上游不同。此处不是 OpenAI 官方响应结构，也不是已捕获的 pi-ai 运行结果。</p><div class="journey-sources">${source('packages/llm/llm-pi-ai/src/stream.ts',174,'转换源码')}</div>`;
@@ -80,7 +85,7 @@
 
   // 重点说明“消息内容”和“日志外壳”：省略的字段不生成假序号、时间或消息 ID。
   function eventlogStage(scene, data) {
-    if (data.blocked) return `<div class="journey-empty">${e(data.blocked)}</div>`;
+    if (data.blocked) return unavailable(data);
     return `<p class="journey-description">源码结构演示：流结束并完成检查后，收集器生成 assistant 消息；session.append 再给消息加上日志事件外壳。下面保留同一候选的全部工具块。</p><div class="journey-pair">${code('输入：Harness assistant 消息片段',data.message,'Harness assistant 消息片段')}${code('输出：EventLog 事件片段',data.event,'EventLog assistant/message 结构片段')}</div><table class="journey-mapping"><thead><tr><th>输入位置</th><th>输出位置</th><th>发生了什么</th></tr></thead><tbody><tr><td><code>role / content</code></td><td><code>data.message.role / content</code></td><td>消息内容原样包入事件</td></tr><tr><td>由提交动作决定</td><td><code>type: assistant/message</code></td><td>新增事件类型</td></tr><tr><td>会话提交意图</td><td><code>surfaceOp: append</code></td><td>追加到有效会话历史</td></tr></tbody></table><p class="journey-note">未采集并省略：消息 id、source/replayState、事件 seq/time、turn/step、usage 和 stream。这里没有执行 session.append，也没有产生真实 EventLog。正式记录还需要这些运行时字段。</p><div class="journey-sources">${source('packages/core/agent-loop/src/agent.ts',528,'消息生成与提交源码')}${source('packages/core/session/src/index.ts',818,'事件外壳源码')}</div>`;
   }
 
@@ -99,9 +104,10 @@
     const data = prepare(scene,requestedKey);
     const stage = stages.find(item => item.id === requestedStage) || stages[0];
     const renderers = {response:responseStage,adapter:adapterStage,eventlog:eventlogStage,tool:toolStage,request:requestStage};
-    const buttons = stages.map((item,index) => `<button data-action="journey-stage" data-stage="${item.id}" ${item.id === stage.id ? 'aria-current="step"' : ''}><span>${index+1}</span><strong>${item.name}</strong><small>${item.status}</small></button>`).join('');
+    const stageStatus = item => !data.selected && item.id !== 'response' ? '不适用：无工具调用' : data.blocked && ['adapter','eventlog'].includes(item.id) ? '演示条件未满足' : item.status;
+    const buttons = stages.map((item,index) => `<button data-action="journey-stage" data-stage="${item.id}" ${item.id === stage.id ? 'aria-current="step"' : ''}><span>${index+1}</span><strong>${item.name}</strong><small>${stageStatus(item)}</small></button>`).join('');
     const calls = data.tools.map(tool => `<button data-action="journey-tool" data-tool="${e(toolKey(tool))}" aria-pressed="${toolKey(tool) === (data.selected && toolKey(data.selected))}">${e(tool.name)} · choice ${tool.choice} / tool ${tool.index}<code>${e(tool.callID)}</code></button>`).join('');
-    return `<div class="journey-intro"><h2>一次工具调用的完整过程</h2><p>请求 1：真实 API 样本。转换与会话提交：源码结构演示。工具执行与请求 2：未采集。</p><p>流程按处理层次组织；适配器转换会与接收流同时推进，不代表每一步都要等待上一步全部完成。</p></div><nav class="journey-rail" aria-label="调用处理阶段">${buttons}</nav>${calls ? `<div class="journey-calls" aria-label="选择关联工具调用">${calls}</div>` : ''}<section class="panel journey-stage-panel"><div class="panel-head"><span class="panel-title">${e(stage.name)}</span><span class="badge ${stage.id === 'response' ? 'good' : 'warn'}">${e(stage.status)}</span></div>${identity(scene,data)}<div class="journey-stage-content">${renderers[stage.id](scene,data)}</div></section><p class="journey-provenance">转换依据：Harness 源码 ${revision.slice(0,7)}。浏览本视图不执行工具、不写会话、不请求模型。</p>`;
+    return `<div class="journey-intro"><h2>${data.selected ? '一次工具调用的完整过程' : '本场景响应与工具链路适用范围'}</h2><p>请求 1：真实 API 样本。转换与会话提交：源码结构演示。工具执行与请求 2：未采集。</p><p>流程按处理层次组织；适配器转换会与接收流同时推进，不代表每一步都要等待上一步全部完成。</p></div><nav class="journey-rail" aria-label="调用处理阶段">${buttons}</nav>${calls ? `<div class="journey-calls" aria-label="选择关联工具调用">${calls}</div>` : ''}<section class="panel journey-stage-panel"><div class="panel-head"><span class="panel-title">${e(stage.name)}</span><span class="badge ${stage.id === 'response' ? 'good' : 'warn'}">${e(stageStatus(stage))}</span></div>${!data.selected && stage.id === 'response' ? unavailable(data) : identity(scene,data)}<div class="journey-stage-content">${!data.selected && stage.id !== 'response' ? unavailable(data) : renderers[stage.id](scene,data)}</div></section><p class="journey-provenance">转换依据：Harness 源码 ${revision.slice(0,7)}。浏览本视图不执行工具、不写会话、不请求模型。</p>`;
   }
 
   window.StreamJourney = {stages,prepare,render,toolKey};

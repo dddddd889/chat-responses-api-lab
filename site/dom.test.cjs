@@ -361,3 +361,17 @@ test('usage 来源明确，两栏在用量事件前为 null，事件到达后同
     assert.match(document.querySelector('#pane-result').textContent,/不随回放进度变化/);
   }
 });
+
+// 无工具、长度截断场景不应伪装成已有工具转换或会话写入记录。
+test('无工具场景完整过程明确标注不适用而非空转换',{skip:!modulePath},async t => {
+  const dom = await open('responses-length',t), document = dom.window.document;
+  document.querySelector('[data-tab="journey"]').click();
+  for (const stage of ['response','adapter','eventlog','tool','request']) {
+    document.querySelector(`[data-action="journey-stage"][data-stage="${stage}"]`).click();
+    const pane = document.querySelector('#pane-journey');
+    assert.match(pane.textContent,/不适用：本场景没有工具调用/);
+    assert.match(pane.textContent,/尚未实现展示/);
+    assert.ok(!pane.textContent.includes('undefined'));
+    if (stage !== 'response') assert.match(pane.querySelector('.journey-stage-panel .badge').textContent,/不适用/);
+  }
+});
