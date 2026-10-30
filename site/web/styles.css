@@ -13,3 +13,8 @@
 .compare-type-count span{min-width:0;overflow-wrap:anywhere}
 
 @media(min-width:761px){.workbench>.panel>.panel-description{min-height:54px}.snapshot-body>.snapshot-json-label,.final-result-body>.snapshot-json-label{min-height:34px}}
+
+/* 回放控制条随页面滚动吸顶，保持在内容上方且不影响初始布局。 */
+.playback-bar{position:sticky;top:12px;z-index:5;box-shadow:0 5px 18px #18233614}
+@media(max-width:760px){.playback-bar{top:0}}
+@media print{.playback-bar{position:static;box-shadow:none}}

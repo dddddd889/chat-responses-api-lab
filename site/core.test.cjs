@@ -170,8 +170,7 @@ test('工具参数中途保持原始字符串，当前字段路径与终点一�
 
 test('差异比较忽略对象属性顺序，并转义模型文本与字段路径',() => {
   assert.equal(V.differences({a:1,b:2},{b:2,a:1}).length,0);
-  const scene = {protocol:'chat',sse:[],result:{object:{'<script>':'<img src=x onerror=alert(1)>'}}};
-  const html = V.comparison(scene,{step:0,max:0});
-  assert.ok(!html.includes('<script>'));assert.ok(!html.includes('<img'));
-  assert.ok(html.includes('&lt;script&gt;'));assert.ok(html.includes('&lt;img'));
+  const scene = {protocol:'chat',sse:[{object:{id:'x',model:'m',created:1,choices:[{index:0,delta:{content:'<img src=x onerror=alert(1)>'}}]}}],result:{object:{}}};
+  const html = V.comparison(scene,{step:1,max:1});
+  assert.ok(!html.includes('<img'));assert.ok(html.includes('&lt;img'));
 });

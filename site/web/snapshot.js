@@ -115,7 +115,7 @@
     return `<div class="snapshot-json-label">截至 SSE #${snapshot.step} · 与完整结果使用相同字段结构</div><div class="snapshot-json"><pre class="code" tabindex="0" aria-label="合并对象 JSON">${C.highlight(C.pretty(object(scene,snapshot)))}</pre></div>`;
   }
 
-  // 同时给出当前事件的更新路径和当前值/终点值，建立事件到最终字段的关联。
+  // 展示本条 SSE 的处理前后值；与日志终点的比较单独保留为状态提示。
   function comparison(scene, snapshot) {
     const current = object(scene,snapshot);
     const previous = object(scene,{step:Math.max(0,snapshot.step-1)});
@@ -123,8 +123,8 @@
     const diffs = differences(current,scene.result.object);
     const value = item => item === undefined ? '尚无此字段' : C.pretty(item);
     const updated = changes.length ? changes.map(change => `<code>${C.escapeHTML(change.path)}</code>`).join('、') : '本条没有更新已建模字段（可能是结束标记或扩展事件）';
-    const rows = diffs.map(diff => `<tr><td><code>${C.escapeHTML(diff.path)}</code></td><td><pre>${C.escapeHTML(value(diff.current))}</pre></td><td><pre>${C.escapeHTML(value(diff.final))}</pre></td></tr>`).join('');
-    return `<p class="comparison-update">${snapshot.step ? `SSE #${snapshot.step} 更新` : '尚未接收事件'}：${snapshot.step ? updated : '选择事件，观察字段逐步补全。'}</p><p class="comparison-status" role="status">${diffs.length ? `当前有 ${diffs.length} 处字段差异${snapshot.step === snapshot.max ? '，请检查终点结果' : '，继续接收事件后对照'}` : '逐字段一致：当前累积对象与日志完整结果相同'}</p>${diffs.length ? `<div class="comparison-table-wrap"><table class="comparison-table"><thead><tr><th>字段路径</th><th>当前累积值</th><th>日志最终值</th></tr></thead><tbody>${rows}</tbody></table></div>` : ''}`;
+    const rows = changes.map(diff => `<tr><td><code>${C.escapeHTML(diff.path)}</code></td><td><pre>${C.escapeHTML(value(diff.current))}</pre></td><td><pre>${C.escapeHTML(value(diff.final))}</pre></td></tr>`).join('');
+    return `<p class="comparison-update">${snapshot.step ? `SSE #${snapshot.step} 更新` : '尚未接收事件'}：${snapshot.step ? updated : '选择事件，观察字段逐步补全。'}</p><p class="comparison-status" role="status">${diffs.length ? `当前累积对象与右侧完整结果有 ${diffs.length} 处差异${snapshot.step === snapshot.max ? '，请检查终点结果' : '，继续接收事件后对照'}` : '逐字段一致：当前累积对象与日志完整结果相同'}</p>${changes.length ? `<div class="comparison-table-wrap"><table class="comparison-table"><thead><tr><th>字段路径</th><th>本条处理前</th><th>本条处理后</th></tr></thead><tbody>${rows}</tbody></table></div>` : ''}`;
   }
 
   window.StreamSnapshotView = {object,render,comparison,differences,toggleLabel,copyLabel:'复制当前累积对象 JSON'};

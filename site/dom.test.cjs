@@ -172,7 +172,7 @@ test('明确 0 命中显示 0%，HTTP 没有 usage 时显示未知',{skip:!modul
 });
 
 // 选择参数增量时，当前值、最终值与上游事件应能通过同一路径关联。
-test('逐步选择 SSE 会更新字段对照，完整结果保持不变，终点消除差异',{skip:!modulePath},async t => {
+test('逐步选择 SSE 会更新处理前后值，完整结果保持不变，终点显示一致',{skip:!modulePath},async t => {
   for (const protocol of ['chat','responses']) {
     const dom = await open(protocol+'-tool',t), document = dom.window.document;
     const scene = C.prepare(meta.scenarios.find(scene => scene.id === protocol+'-tool'));
@@ -186,7 +186,8 @@ test('逐步选择 SSE 会更新字段对照，完整结果保持不变，终点
     assert.equal(document.querySelector('[aria-label="日志完整结果 JSON"]').textContent,finalJSON);
     document.querySelector(`.sse-row[data-index="${scene.sse.length}"]`).click();
     assert.ok(panel.textContent.includes('逐字段一致'));
-    assert.equal(panel.querySelector('.comparison-table'),null);
+    if (protocol === 'responses') assert.ok(panel.querySelector('.comparison-table').textContent.includes('completed'));
+    else assert.equal(panel.querySelector('.comparison-table'),null);
   }
 });
 
@@ -206,4 +207,22 @@ test('上游列表和检查器显示完整 event type，Chat event 与 JSON obje
   const chat = await open('chat-tool',t), chatDocument = chat.window.document;
   assert.equal(chatDocument.querySelector('.event-row-title').textContent,'message');
   assert.ok(chatDocument.querySelector('.event-row-detail').textContent.includes('JSON object: chat.completion.chunk'));
+});
+
+// 同一参数的前值和后值都应逐条推进，日志终点仍在第三列固定保留。
+test('字段表的处理前后值均随连续 SSE 更新',{skip:!modulePath},async t => {
+  const dom = await open('responses-tool',t), document = dom.window.document;
+  const scene = C.prepare(meta.scenarios.find(scene => scene.id === 'responses-tool'));
+  const deltas = scene.sse.filter(record => record.object?.type === 'response.function_call_arguments.delta');
+  const final = document.querySelector('.final-result-panel .code').textContent;
+  let accumulated = '';
+  for (const record of deltas) {
+    document.querySelector(`.sse-row[data-index="${record.event_index}"]`).click();
+    const row = [...document.querySelectorAll('.comparison-table tbody tr')].find(row => row.cells[0].textContent === '$.output[0].arguments');
+    assert.ok(row);
+    assert.equal(row.cells[1].textContent,accumulated ? JSON.stringify(accumulated,null,2) : '尚无此字段');
+    accumulated += record.object.delta;
+    assert.equal(row.cells[2].textContent,JSON.stringify(accumulated,null,2));
+    assert.equal(document.querySelector('.final-result-panel .code').textContent,final);
+  }
 });

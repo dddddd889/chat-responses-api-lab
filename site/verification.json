@@ -2,7 +2,7 @@
   "pages": 15,
   "individual_scenarios": 14,
   "data_tests_passed": 25,
-  "dom_tests_passed": 22,
+  "dom_tests_passed": 23,
   "http_resources_checked": 22,
   "original_files_unchanged": 419,
   "old_markdown_files_unchanged": 3,
@@ -24,5 +24,7 @@
     "拼接状态",
     "完整结果"
   ],
-  "full_event_type_visible": true
+  "full_event_type_visible": true,
+  "dynamic_event_before_after": true,
+  "sticky_playback_controls": true
 }
