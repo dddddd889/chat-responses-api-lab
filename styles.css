@@ -41,3 +41,7 @@
 .reasoning-provenance{font-size:11px;line-height:1.8;color:#876628;background:#fff8e8;border:1px solid #eadbb9;border-radius:6px;padding:9px 11px;margin-bottom:12px}.reasoning-output{border-left:3px solid #8e84b8}
 /* HTTP 状态用紧凑行显示，不再占用整排统计卡片。 */
 .http-summary{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--muted);margin:0 0 14px}
+/* 完整过程回放控件与内容卡片共用页面滚动，进度条在窄屏允许换行。 */
+.journey-playback{flex-wrap:wrap}.journey-playback input{flex:1;min-width:150px;accent-color:var(--accent)}
+.journey-playback button{border:1px solid var(--border);border-radius:6px;padding:6px 10px;background:var(--surface);color:inherit;cursor:pointer}
+.journey-playback span{font-size:11px}.journey-playback button:disabled{opacity:.4;cursor:default}
