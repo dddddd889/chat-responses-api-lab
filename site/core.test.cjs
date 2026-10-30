@@ -138,7 +138,10 @@ test('所有流场景独立重放到终点均与 Go 日志一致，不读取最�
   for (const scene of scenes.filter(item => !item.httpError)) {
     const before = JSON.stringify(scene);
     const final = plain(V.object(scene,{step:scene.sse.length}));
-    assert.deepEqual(final,scene.result.object,scene.id);
+    const expected = JSON.parse(JSON.stringify(scene.result.object));
+    if (scene.id === 'chat-thinking') expected.choices[0].reasoning_content = scene.sse.flatMap(record => record.object?.choices || []).map(choice => choice.delta?.reasoning_content || '').join('');
+    assert.deepEqual(final,expected,scene.id);
+    assert.deepEqual(plain(V.finalObject(scene)),expected,scene.id);
     const altered = {...scene,result:{...scene.result,object:{wrong:true}}};
     assert.deepEqual(plain(V.object(altered,{step:scene.sse.length})),final);
     assert.ok(V.differences(final,altered.result.object).length > 0);
@@ -208,4 +211,64 @@ test('缺少工具、截断或非法参数时不制造可执行的 Harness 消�
   assert.ok(invalid.blocked);assert.deepEqual(plain(invalid.piBlocks),[]);
   scene.result.status = 'partial';
   assert.ok(J.prepare(scene).blocked.includes('没有完整结束'));
+});
+
+// 逐条使用真实 SSE 的 delta/done 作独立预期，确认推理在结束前就已增长。
+test('Chat 与 Responses 的真实思考样本逐条累积，done 不重复，正文与推理分开',() => {
+  for (const protocol of ['chat','responses']) {
+    const scene = scenes.find(item => item.id === protocol+'-thinking');
+    const original = JSON.stringify(scene.result.object);
+    let expected = '', deltaCount = 0;
+    for (const record of scene.sse) {
+      const event = record.object;
+      if (protocol === 'chat') for (const choice of event?.choices || []) {
+        if (typeof choice.delta?.reasoning_content === 'string') {expected += choice.delta.reasoning_content;deltaCount++;}
+      }
+      if (event?.type === 'response.reasoning_text.delta') {expected += event.delta;deltaCount++;}
+      if (event?.type === 'response.reasoning_text.done') expected = event.text;
+      const current = V.object(scene,{step:record.event_index});
+      const reasoning = protocol === 'chat' ? current.choices[0]?.reasoning_content || '' : (current.output.find(item => item.type==='reasoning')?.content || []).map(part => part.text || '').join('');
+      assert.equal(reasoning,expected,`${scene.id} SSE #${record.event_index}`);
+      const summary = C.snapshot(scene,record.event_index);
+      assert.equal(summary.reasoning,expected,`${scene.id} 内容摘要 SSE #${record.event_index}`);
+      assert.ok(!summary.text.includes('We need'));
+    }
+    assert.ok(deltaCount>10);assert.ok(expected.length>20);
+    assert.equal(JSON.stringify(scene.result.object),original);
+    if (protocol==='chat') assert.equal(scene.result.object.choices[0].reasoning_content,undefined);
+    assert.deepEqual(plain(V.object(scene,{step:scene.sse.length})),plain(V.finalObject(scene)));
+    assert.equal(C.snapshot(scene,scene.sse.length).text,'391');
+  }
+});
+
+// 同一 reasoning 项可同时含 content 和 summary；分别定位并用完整块校准。
+test('交错推理项、正文与摘要按索引隔离，done 全文校准，不串入工具或回答',() => {
+  const events = [
+    {type:'response.created',response:{id:'r',model:'m',status:'in_progress',output:[]}},
+    {type:'response.output_item.added',output_index:0,item:{id:'rs0',type:'reasoning',status:'in_progress'}},
+    {type:'response.output_item.added',output_index:1,item:{id:'rs1',type:'reasoning',status:'in_progress'}},
+    {type:'response.reasoning_text.delta',output_index:0,item_id:'rs0',content_index:1,delta:'A'},
+    {type:'response.reasoning_text.delta',output_index:1,item_id:'rs1',content_index:0,delta:'B'},
+    {type:'response.reasoning_summary_text.delta',output_index:0,item_id:'rs0',summary_index:0,delta:'s'},
+    {type:'response.reasoning_text.done',output_index:0,item_id:'rs0',content_index:1,text:'A corrected'},
+    {type:'response.reasoning_summary_text.done',output_index:0,item_id:'rs0',summary_index:0,text:'summary corrected'},
+  ];
+  const scene = {protocol:'responses',sse:events.map((object,index)=>({object,event_index:index+1}))};
+  const current = V.object(scene,{step:events.length});
+  assert.equal(current.output[0].content[0].text,'A corrected');
+  assert.equal(current.output[0].summary[0].text,'summary corrected');
+  assert.equal(current.output[1].content[0].text,'B');
+  assert.equal(C.snapshot(scene,events.length).text,'');
+  assert.equal(C.snapshot(scene,events.length).reasoningSummary,'summary corrected');
+  const item = {id:'rs0',type:'reasoning',status:'completed',content:[{type:'reasoning_text',text:'final correction'}],summary:[{type:'summary_text',text:'final summary'}]};
+  scene.sse.push({event_index:9,object:{type:'response.output_item.done',output_index:0,item}});
+  assert.equal(V.object(scene,{step:9}).output[0].content[0].text,'final correction');
+  assert.equal(C.snapshot(scene,9).reasoning,'final correctionB');
+  const response = {id:'r',model:'m',status:'completed',output:[item,{...current.output[1],status:'completed'}],usage:null,error:null,incomplete_details:null};
+  scene.sse.push({event_index:10,object:{type:'response.completed',response}});
+  const raw = JSON.parse(JSON.stringify(response));delete raw.output[0].summary;
+  scene.result = {object:raw};
+  assert.deepEqual(plain(V.finalObject(scene)),plain(response));
+  assert.deepEqual(plain(V.object(scene,{step:10})),plain(response));
+  assert.equal(scene.result.object.output[0].summary,undefined);
 });

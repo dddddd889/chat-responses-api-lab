@@ -60,11 +60,20 @@
   function snapshot(scenario, cursor) {
     const max = scenario.sse.length;
     const step = Math.max(0, Math.min(max, Number(cursor) || 0));
-    const state = {step,max,text:'',refusal:'',reasoning:'',tools:[],usage:null,status:'waiting',finish:''};
+    const state = {step,max,text:'',refusal:'',reasoning:'',reasoningSummary:'',tools:[],usage:null,status:'waiting',finish:''};
     if (scenario.httpError) return {...state,status:'http_error',error:scenario.httpError.object};
     if (!step) return state;
     state.status = 'streaming';
     const tools = new Map(), parts = new Map();
+    // 完整项目结束时校准正文、推理和摘要，避免展示层继续使用旧增量。
+    function replaceParts(index, item) {
+      for (const key of parts.keys()) if (key.startsWith(`${index}:`)) parts.delete(key);
+      (item.content || []).forEach((part,contentIndex) => {
+        const kind = part.type === 'refusal' ? 'refusal' : part.type === 'reasoning_text' ? 'reasoning' : part.type === 'output_text' ? 'text' : null;
+        if (kind) parts.set(`${index}:${contentIndex}:${kind}`,part.text ?? part.refusal ?? '');
+      });
+      (item.summary || []).forEach((part,summaryIndex) => parts.set(`${index}:${summaryIndex}:summary`,part.text || ''));
+    }
     let transportDone = false;
     for (const record of scenario.sse.slice(0, step)) {
       const event = record.object;
@@ -72,7 +81,7 @@
         if (record.data === '[DONE]') { transportDone = true; continue; }
         for (const choice of event?.choices || []) {
           const delta = choice.delta || {};
-          state.text += delta.content || ''; state.refusal += delta.refusal || ''; state.reasoning += delta.reasoning_content || '';
+          state.text += delta.content || ''; state.refusal += delta.refusal || ''; state.reasoning += typeof delta.reasoning_content === 'string' ? delta.reasoning_content : '';
           for (const call of delta.tool_calls || []) {
             const key = `${choice.index}:${call.index}`;
             const tool = tools.get(key) || {choice:choice.index,index:call.index,callID:'',itemID:'',name:'',arguments:'',complete:false};
@@ -90,24 +99,47 @@
         const index = event.output_index;
         if (event.type === 'response.output_item.added' || event.type === 'response.output_item.done') {
           const item = event.item;
+          if (item && event.type === 'response.output_item.done') replaceParts(index,item);
           if (item?.type === 'function_call') tools.set(index,{choice:0,index,callID:item.call_id || '',itemID:item.id,name:item.name || '',arguments:item.arguments || '',complete:event.type.endsWith('.done') && item.status !== 'incomplete'});
         }
         if (event.type === 'response.function_call_arguments.delta' || event.type === 'response.function_call_arguments.done') {
           const tool = tools.get(index);
           if (tool) tool.arguments = event.type.endsWith('.done') ? event.arguments : tool.arguments + (event.delta || '');
         }
-        if (['response.output_text.delta','response.output_text.done','response.refusal.delta','response.refusal.done'].includes(event.type)) {
-          const key = `${index}:${event.content_index}:${event.type.includes('refusal') ? 'refusal' : 'text'}`;
-          parts.set(key, event.type.endsWith('.delta') ? (parts.get(key) || '') + (event.delta || '') : (event.text ?? event.refusal ?? ''));
+        if (['response.output_text.delta','response.output_text.done','response.refusal.delta','response.refusal.done','response.reasoning_text.delta','response.reasoning_text.done','response.reasoning_summary_text.delta','response.reasoning_summary_text.done'].includes(event.type)) {
+          const kind = event.type.includes('reasoning_summary_text') ? 'summary' : event.type.includes('reasoning_text') ? 'reasoning' : event.type.includes('refusal') ? 'refusal' : 'text';
+          const key = `${index}:${kind === 'summary' ? event.summary_index : event.content_index}:${kind}`;
+          parts.set(key,event.type.endsWith('.delta') ? (parts.get(key) || '')+(event.delta || '') : (event.text ?? event.refusal ?? ''));
+        }
+        if (['response.content_part.done','response.reasoning_summary_part.done'].includes(event.type) && event.part) {
+          const kind = event.type.includes('reasoning_summary') ? 'summary' : event.part.type === 'reasoning_text' ? 'reasoning' : event.part.type === 'refusal' ? 'refusal' : event.part.type === 'output_text' ? 'text' : null;
+          if (kind) parts.set(`${index}:${kind === 'summary' ? event.summary_index : event.content_index}:${kind}`,event.part.text ?? event.part.refusal ?? '');
         }
         if (event.response?.usage) state.usage = normalizeUsage(event.response.usage,'responses');
         if (['response.completed','response.incomplete','response.failed'].includes(event.type)) {
           transportDone = true; state.status = event.type === 'response.completed' ? 'complete' : 'partial';
+          if (event.response?.output) {
+            parts.clear();tools.clear();
+            event.response.output.forEach((item,outputIndex) => {
+              replaceParts(outputIndex,item);
+              if (item.type === 'function_call') tools.set(outputIndex,{choice:0,index:outputIndex,callID:item.call_id || '',itemID:item.id,name:item.name || '',arguments:item.arguments || '',complete:item.status === 'completed' || event.type === 'response.completed'});
+            });
+          }
         }
       }
     }
     if (scenario.protocol === 'responses') {
-      for (const [key,value] of parts) { if (key.endsWith('refusal')) state.refusal += value; else state.text += value; }
+      // 完整项目校准会重新插入 Map，展示顺序必须按协议索引排序。
+      const ordered = [...parts].sort(([a],[b]) => {
+        const ai = a.split(':'), bi = b.split(':');
+        return Number(ai[0])-Number(bi[0]) || Number(ai[1])-Number(bi[1]) || a.localeCompare(b);
+      });
+      for (const [key,value] of ordered) {
+        if (key.endsWith(':refusal')) state.refusal += value;
+        else if (key.endsWith(':reasoning')) state.reasoning += value;
+        else if (key.endsWith(':summary')) state.reasoningSummary += value;
+        else state.text += value;
+      }
     }
     state.tools = [...tools.values()].sort((a,b) => a.choice-b.choice || a.index-b.index);
     if (transportDone && state.status === 'streaming') state.status = state.finish === 'length' ? 'truncated' : 'complete';

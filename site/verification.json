@@ -1,13 +1,13 @@
 {
   "pages": 15,
   "individual_scenarios": 14,
-  "data_tests_passed": 27,
-  "dom_tests_passed": 25,
+  "data_tests_passed": 29,
+  "dom_tests_passed": 26,
   "http_resources_checked": 22,
   "original_files_unchanged": 419,
   "old_markdown_files_unchanged": 3,
   "new_model_requests": 0,
-  "screen_qa": "upstream_horizontal_and_both_results_full_height_checked",
+  "screen_qa": "responses_reasoning_steps_5_6_both_columns_We_to_We_need",
   "hosting": "github_pages",
   "cache_metrics": {
     "cached_tokens": 128,
@@ -41,5 +41,9 @@
     "replay": 895,
     "result_tab": 909,
     "internal_vertical_scroll": false
-  }
+  },
+  "reasoning_incremental": true,
+  "reasoning_done_correction": true,
+  "final_result_live_json": true,
+  "reasoning_reference": "pi-ai 1.1.0 source and Harness 687f282 adapter/assembler; no runtime requests"
 }

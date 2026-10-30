@@ -37,6 +37,7 @@ async function open(id,t,view='json') {
   if (view === 'json' && diffToggle?.getAttribute('aria-pressed') === 'true') diffToggle.click();
   const resultToggle = dom.window.document.querySelector('[data-action="result-mode"]');
   if (view === 'json' && resultToggle?.getAttribute('aria-pressed') === 'false') resultToggle.click();
+  if (view === 'diff' && resultToggle?.getAttribute('aria-pressed') === 'true') resultToggle.click();
   return dom;
 }
 
@@ -52,7 +53,7 @@ for (const scene of meta.scenarios) {
       const titles = [...document.querySelectorAll('.workbench > .panel .panel-title')].map(node => node.textContent);
       assert.equal(titles.length,3);
       assert.ok(titles[0].startsWith('上游 SSE'));assert.ok(titles[1].startsWith('拼接状态'));assert.ok(titles[2].startsWith('完整结果'));
-      assert.ok(document.querySelector('.final-result-panel [aria-label="日志完整结果 JSON"]'));
+      assert.ok(document.querySelector('.final-result-panel [aria-label="完整结果视图 JSON"]'));
     }
     if (scene.httpStatus !== 400) document.querySelector('[data-action="snapshot-mode"]').click();
     assert.equal(document.querySelectorAll('.protocol-switch a').length,2);
@@ -150,7 +151,7 @@ test('JSON 视图使用日志同结构，当前累积值可直接对照最终结
     assert.deepEqual(parsed,prepared.result.object);
     assert.equal(parsed.preview,undefined);
     assert.ok(document.querySelector('.result-match').textContent.includes('逐字段一致'));
-    assert.deepEqual(JSON.parse(document.querySelector('[aria-label="日志完整结果 JSON"]').textContent),prepared.result.object);
+    assert.deepEqual(JSON.parse(document.querySelector('[aria-label="完整结果视图 JSON"]').textContent),prepared.result.object);
     assert.equal(document.querySelector('[data-action="snapshot-mode"]').getAttribute('aria-pressed'),'true');
     document.querySelector('[data-content="snapshot"]').click();await Promise.resolve();
     assert.deepEqual(JSON.parse(copied),parsed);
@@ -187,15 +188,15 @@ test('上游列表和检查器显示完整 event type，Chat event 与 JSON obje
   assert.ok(document.getElementById('source-title').textContent.includes('response.function_call_arguments.delta'));
   assert.equal(JSON.parse(document.querySelector('#snapshot-body .code').textContent).output[0].arguments,delta.object.delta);
   const final = JSON.parse(document.querySelector('.final-result-panel .code').textContent);
-  assert.deepEqual(final,scene.result.object);
-  assert.notEqual(final.output[0].arguments,delta.object.delta);
+  assert.equal(final.output[0].arguments,delta.object.delta);
+  assert.deepEqual(JSON.parse(document.querySelector('#pane-result .result-code .code').textContent),scene.result.object);
   const chat = await open('chat-tool',t), chatDocument = chat.window.document;
   assert.equal(chatDocument.querySelector('.event-row-title').textContent,'message');
   assert.ok(chatDocument.querySelector('.event-row-detail').textContent.includes('JSON object: chat.completion.chunk'));
 });
 
 // 右列的红色当前值随回放变化，绿色终点值逐步归并为相同行。
-test('完整结果 Diff 随连续 SSE 更新，到终点差异归零且可切换原始 JSON',{skip:!modulePath},async t => {
+test('完整结果的 JSON 和 Diff 都随 SSE 更新，到终点才核对日志',{skip:!modulePath},async t => {
   for (const protocol of ['chat','responses']) {
     const dom = await open(protocol+'-tool',t,'diff'), document = dom.window.document;
     const scene = C.prepare(meta.scenarios.find(scene => scene.id === protocol+'-tool'));
@@ -206,14 +207,12 @@ test('完整结果 Diff 随连续 SSE 更新，到终点差异归零且可切换
     for (const record of deltas) {
       document.querySelector(`.sse-row[data-index="${record.event_index}"]`).click();
       const rows = [...document.querySelectorAll('#final-result-body .diff-line')];
-      const current = JSON.parse(rows.filter(node => !node.classList.contains('diff-add')).map(node => node.textContent.slice(1)).join('\n'));
-      const final = JSON.parse(rows.filter(node => !node.classList.contains('diff-delete')).map(node => node.textContent.slice(1)).join('\n'));
+      const current = JSON.parse(rows.filter(node => !node.classList.contains('diff-delete')).map(node => node.textContent.slice(1)).join('\n'));
       accumulated += protocol === 'responses' ? record.object.delta : record.object.choices[0].delta.tool_calls[0].function.arguments;
       assert.equal(protocol === 'responses' ? current.output[0].arguments : current.choices[0].tool_calls[0].function.arguments,accumulated);
-      assert.deepEqual(final,scene.result.object);
+      assert.ok(document.querySelector('.result-match').textContent.includes('正在构建'));
     }
     document.querySelector(`.sse-row[data-index="${scene.sse.length}"]`).click();
-    assert.equal(document.querySelectorAll('#final-result-body .diff-add,#final-result-body .diff-delete').length,0);
     assert.ok(document.querySelector('.result-match').textContent.includes('逐字段一致'));
     assert.equal(document.querySelector('.result-comparison'),null);
     document.querySelector('[data-action="result-mode"]').click();
@@ -305,4 +304,40 @@ test('四个主标签的键盘导航可循环，完整过程不会破坏原标�
   }
   document.getElementById('tab-replay').dispatchEvent(new window.KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true}));
   assert.equal(document.getElementById('tab-result').getAttribute('aria-selected'),'true');
+});
+
+// 在真实页面逐条点击每个推理 delta，核对两块对象和摘要，不只验收终点。
+test('思考内容逐条显示在拼接状态和完整结果，终点不重复且原始日志不被修改',{skip:!modulePath},async t => {
+  for (const protocol of ['chat','responses']) {
+    const dom = await open(protocol+'-thinking',t), window = dom.window, document = window.document;
+    const scene = C.prepare(meta.scenarios.find(scene => scene.id===protocol+'-thinking'));
+    const original = document.querySelector('#pane-result .result-code .code').textContent;
+    const deltas = scene.sse.filter(record => protocol==='chat'
+      ? typeof record.object?.choices?.[0]?.delta?.reasoning_content === 'string'
+      : record.object?.type==='response.reasoning_text.delta');
+    let expected = '';
+    for (const record of deltas) {
+      expected += protocol==='chat' ? record.object.choices[0].delta.reasoning_content : record.object.delta;
+      document.querySelector(`.sse-row[data-index="${record.event_index}"]`).click();
+      const current = JSON.parse(document.querySelector('#snapshot-body .code').textContent);
+      const complete = JSON.parse(document.querySelector('#final-result-body .code').textContent);
+      const getReasoning = value => protocol==='chat' ? value.choices[0]?.reasoning_content || '' : (value.output.find(item=>item.type==='reasoning')?.content || []).map(part=>part.text || '').join('');
+      assert.equal(getReasoning(current),expected);
+      assert.equal(getReasoning(complete),expected);
+      assert.ok(!document.querySelector('.result-match').textContent.includes('逐字段一致'));
+    }
+    document.querySelector(`.sse-row[data-index="${scene.sse.length}"]`).click();
+    const current = JSON.parse(document.querySelector('#snapshot-body .code').textContent);
+    assert.deepEqual(JSON.parse(document.querySelector('#final-result-body .code').textContent),current);
+    assert.ok(document.querySelector('.result-match').textContent.includes('逐字段一致'));
+    assert.equal(document.querySelector('#pane-result .result-code .code').textContent,original);
+    if (protocol==='chat') assert.ok(document.querySelector('.reasoning-provenance').textContent.includes('历史 Go 日志未保存'));
+    let copied;
+    Object.defineProperty(window.navigator,'clipboard',{value:{writeText:async value => {copied=value;}},configurable:true});
+    document.querySelector('[data-content="result-view"]').click();await Promise.resolve();
+    assert.deepEqual(JSON.parse(copied),current);
+    document.querySelector('[data-action="snapshot-mode"]').click();
+    assert.equal(document.querySelector('#snapshot-body .reasoning-output').textContent,expected);
+    assert.equal(document.querySelector('#snapshot-body .text-output:not(.reasoning-output)').textContent,'391');
+  }
 });

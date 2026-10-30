@@ -1,4 +1,4 @@
-/* 按 Go 累积器的日志结构重放 SSE；结果对照与回放信息不混入对象。 */
+/* 重放 Go 结果字段和上游推理内容；历史日志原文保留，补全来源单独标注。 */
 (function () {
   'use strict';
   const C = window.StreamCore;
@@ -28,6 +28,8 @@
         const delta = choice.delta || {};
         if (delta.role != null) answer.role = delta.role;
         answer.content += delta.content || '';answer.refusal += delta.refusal || '';
+        // reasoning_content 是上游供应商扩展，只在实际收到字符串时建立字段。
+        if (typeof delta.reasoning_content === 'string') answer.reasoning_content = (answer.reasoning_content || '') + delta.reasoning_content;
         if (choice.finish_reason != null) answer.finish_reason = choice.finish_reason;
         if (delta.function_call) {
           answer.function_call ||= {name:'',arguments:''};
@@ -59,6 +61,7 @@
     const result = {id:item.id,type:item.type};
     for (const key of ['status','role','call_id','name','arguments']) if (item[key]) result[key] = item[key];
     if (item.content?.length) result.content = item.content.filter(Boolean).map(responsePart);
+    if (item.summary?.length) result.summary = item.summary.filter(Boolean).map(responsePart);
     return result;
   }
 
@@ -78,14 +81,31 @@
       const index = event.output_index;
       if (['response.output_item.added','response.output_item.done'].includes(event.type)) items.set(index,responseItem(event.item));
       const item = items.get(index);
-      if (!item) continue;
+      if (!item || (event.item_id && event.item_id !== item.id)) continue;
       if (event.type === 'response.function_call_arguments.delta') item.arguments = (item.arguments || '') + (event.delta || '');
       if (event.type === 'response.function_call_arguments.done') item.arguments = event.arguments;
-      if (['response.output_text.delta','response.output_text.done','response.refusal.delta','response.refusal.done'].includes(event.type)) {
-        item.content ||= [];
+      // 内容块和摘要块分别按 content_index、summary_index 定位，不能混用。
+      if (['response.content_part.added','response.content_part.done','response.reasoning_summary_part.added','response.reasoning_summary_part.done'].includes(event.type) && event.part) {
+        const summary = event.type.includes('reasoning_summary');
+        const key = summary ? 'summary' : 'content';
+        const partIndex = summary ? event.summary_index : event.content_index;
+        if (Number.isInteger(partIndex) && partIndex >= 0) {
+          item[key] ||= [];
+          item[key][partIndex] = responsePart(event.part);
+        }
+      }
+      const textTypes = ['response.output_text.delta','response.output_text.done','response.refusal.delta','response.refusal.done','response.reasoning_text.delta','response.reasoning_text.done','response.reasoning_summary_text.delta','response.reasoning_summary_text.done'];
+      if (textTypes.includes(event.type)) {
+        const summary = event.type.includes('reasoning_summary_text');
+        const key = summary ? 'summary' : 'content';
+        const partIndex = summary ? event.summary_index : event.content_index;
+        if (!Number.isInteger(partIndex) || partIndex < 0) continue;
+        item[key] ||= [];
         const refusal = event.type.includes('refusal');
         const field = refusal ? 'refusal' : 'text';
-        const part = item.content[event.content_index] ||= {type:refusal ? 'refusal' : 'output_text'};
+        const type = summary ? 'summary_text' : event.type.includes('reasoning_text') ? 'reasoning_text' : refusal ? 'refusal' : 'output_text';
+        const part = item[key][partIndex] ||= {type};
+        // done 中的全文替换当前值，不重复追加；output_item.done 再校准整个项目。
         part[field] = event.type.endsWith('.delta') ? (part[field] || '') + (event.delta || '') : event[field];
       }
     }
@@ -98,6 +118,29 @@
     if (scene.httpError) return clone(scene.httpError.object);
     const records = scene.sse.slice(0,snapshot.step);
     return scene.protocol === 'chat' ? chatObject(records) : responseObject(records);
+  }
+
+  // 历史 Go 日志未保存的推理字段从原始 SSE 补回到独立视图，绝不改写日志对象。
+  function finalObject(scene) {
+    const result = clone(scene.result.object);
+    if (scene.protocol === 'chat') {
+      const reasoning = new Map();
+      for (const record of scene.sse) for (const choice of record.object?.choices || []) {
+        if (typeof choice.delta?.reasoning_content === 'string') reasoning.set(choice.index,(reasoning.get(choice.index) || '')+choice.delta.reasoning_content);
+      }
+      for (const [index,text] of reasoning) {
+        const answer = result.choices?.[index];
+        if (answer && !Object.hasOwn(answer,'reasoning_content')) answer.reasoning_content = text;
+      }
+    } else {
+      // 完成事件中的 reasoning summary 是上游全文；仅补入日志确实遗漏的摘要。
+      const full = [...scene.sse].reverse().find(record => ['response.completed','response.incomplete','response.failed'].includes(record.object?.type))?.object.response;
+      for (const item of result.output || []) {
+        const native = full?.output?.find(output => output.id === item.id);
+        if (!Object.hasOwn(item,'summary') && native?.summary?.length) item.summary = native.summary.map(responsePart);
+      }
+    }
+    return result;
   }
 
   // 递归比较同一路径的值；属性顺序不影响比较，数组保留索引语义。
@@ -150,14 +193,19 @@
     return renderLineDiff(object(scene,{step:previousStep}),object(scene,snapshot),`SSE #${previousStep}`,`SSE #${snapshot.step}`,'拼接状态 Git diff');
   }
 
-  // 右列比较当前累积对象和固定日志终点；仅差异随进度变化，原始日志不被修改。
-  function renderResult(scene, snapshot, mode='diff') {
-    const current = object(scene,snapshot), final = scene.result.object;
-    const diffs = differences(current,final);
-    const status = `<div class="result-match" role="status">${diffs.length ? `距日志终点还有 ${diffs.length} 处字段差异` : '逐字段一致：当前状态已达到日志终点'}</div>`;
-    if (mode === 'json') return status+`<div class="snapshot-json-label">日志完整结果 · 固定原文</div><div class="final-result-code"><pre class="code" tabindex="0" aria-label="日志完整结果 JSON">${C.highlight(C.pretty(final))}</pre></div>`;
-    return status+renderLineDiff(current,final,`当前 SSE #${snapshot.step}`,'日志完整结果','完整结果 Git diff');
+  // 右列直接跟随当前 SSE 构建完整对象；仅到记录终点才与日志补全视图核对。
+  function renderResult(scene, snapshot, mode='json') {
+    const current = object(scene,snapshot);
+    const final = finalObject(scene);
+    const supplemented = differences(scene.result.object,final).length > 0;
+    const atEnd = snapshot.step === snapshot.max;
+    const diffs = atEnd ? differences(current,final) : [];
+    const status = `<div class="result-match" role="status">${atEnd ? diffs.length ? `终点核对发现 ${diffs.length} 处字段差异` : '逐字段一致：当前状态已达到本次记录终点' : `正在构建完整对象 · SSE #${snapshot.step} / ${snapshot.max}`}</div>`;
+    const provenance = supplemented ? '<div class="reasoning-provenance">推理字段直接来自上游 SSE；历史 Go 日志未保存该字段，原文仍在“完整结果”页。</div>' : '';
+    if (mode === 'json') return status+provenance+`<div class="snapshot-json-label">截至 SSE #${snapshot.step} 的完整累积视图</div><div class="final-result-code"><pre class="code" tabindex="0" aria-label="完整结果视图 JSON">${C.highlight(C.pretty(current))}</pre></div>`;
+    const previousStep = Math.max(0,snapshot.step-1);
+    return status+provenance+renderLineDiff(object(scene,{step:previousStep}),current,`SSE #${previousStep}`,`SSE #${snapshot.step}`,'完整结果 Git diff');
   }
 
-  window.StreamSnapshotView = {object,render,renderDiff,diffLines,renderLineDiff,renderResult,differences,toggleLabel,copyLabel:'复制当前累积对象 JSON'};
+  window.StreamSnapshotView = {object,finalObject,render,renderDiff,diffLines,renderLineDiff,renderResult,differences,toggleLabel,copyLabel:'复制当前累积对象 JSON'};
 })();
