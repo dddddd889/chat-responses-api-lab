@@ -14,7 +14,7 @@
   const counterpart = scenes.find(item => item.kind === scene.kind && item.protocol !== scene.protocol);
   const params = new URLSearchParams(location.search);
   const app = document.getElementById('app');
-  const state = {cursor:params.has('step') ? Math.max(0,Math.min(scene.sse.length,Number(params.get('step')) || 0)) : scene.sse.length, tab:['replay','compare','result'].includes(params.get('tab')) ? params.get('tab') : 'replay', filter:'all', search:'', sourceMode:'json', snapshotMode:params.get('view') === 'visual' ? 'visual' : 'json', playing:false, interval:650, timer:null};
+  const state = {cursor:params.has('step') ? Math.max(0,Math.min(scene.sse.length,Number(params.get('step')) || 0)) : scene.sse.length, tab:['replay','compare','result'].includes(params.get('tab')) ? params.get('tab') : 'replay', filter:'all', search:'', sourceMode:'json', snapshotMode:['json','visual','diff'].includes(params.get('view')) ? params.get('view') : 'diff', playing:false, interval:650, timer:null};
   let toastTimer;
   const icon = (name,size=15) => {
     const paths = {play:'<path d="m8 5 11 7-11 7Z"/>',pause:'<path d="M8 5v14M16 5v14"/>',back:'<path d="M6 5v14m12-14L8 12l10 7Z"/>',prev:'<path d="m15 5-7 7 7 7"/>',next:'<path d="m9 5 7 7-7 7"/>',code:'<path d="m8 6-6 6 6 6m8-12 6 6-6 6m-5 2 2-16"/>',flow:'<rect x="3" y="4" width="6" height="5" rx="1"/><rect x="15" y="15" width="6" height="5" rx="1"/><path d="M6 9v8h9m-1-4 4 4-4 4"/>',braces:'<path d="M9 3H7v6l-3 3 3 3v6h2m6-18h2v6l3 3-3 3v6h-2"/>',copy:'<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M15 8V3H3v12h5"/>',download:'<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',compare:'<path d="M12 3v18M4 7h4v10H4M16 7h4v10h-4"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/>',check:'<path d="m5 12 4 4L19 6"/>',link:'<path d="m10 13 4-4m-6 7-2 2a4 4 0 0 1-6-6l5-5a4 4 0 0 1 6 0m2 1 2-2a4 4 0 0 1 6 6l-5 5a4 4 0 0 1-6 0"/>'};
@@ -69,7 +69,7 @@
         <div class="playback-bar"><button class="control-btn" data-action="reset" aria-label="回到开头" title="回到开头">${icon('back')}</button><button class="control-btn" data-action="prev" aria-label="上一条 SSE" title="上一条 SSE">${icon('prev')}</button><button class="play-button" id="play-toggle" data-action="play" aria-label="播放回放">${icon('play')}</button><button class="control-btn" data-action="next" aria-label="下一条 SSE" title="下一条 SSE">${icon('next')}</button><div class="playback-slider"><input id="event-progress" type="range" min="0" max="${scene.sse.length}" value="${state.cursor}" aria-label="回放到第几条 SSE"><span class="playback-step" id="playback-step"></span></div><div class="playback-meta"><span class="keyboard-hint">逐条探索</span><span class="keycap">← →</span><select id="playback-speed" aria-label="回放速度"><option value="1200">慢速</option><option value="650" selected>正常</option><option value="250">快速</option></select></div></div>
         <div class="workbench">
           <section class="panel"><div class="panel-head"><span class="layer-number">01</span><span class="panel-title">上游 SSE<small>FULL EVENT TYPE / JSON</small></span><span class="panel-count">${scene.sse.length}</span></div><div class="panel-description">显示完整事件类型与原始 data JSON。点击序号联动当前累积状态。</div><div class="event-list" id="sse-list"></div><div class="inspector"><div class="inspector-head"><span id="source-title">事件检查器</span><div><button data-action="source-mode" id="source-mode-button">查看 SSE 帧</button> <button data-action="copy" data-content="source" aria-label="复制当前上游事件">${icon('copy',11)}</button></div></div><pre class="code" id="source-code" tabindex="0" aria-label="上游事件 JSON"></pre></div></section>
-          <section class="panel"><div class="panel-head"><span class="layer-number two">02</span><span class="panel-title">拼接状态 · 累积对象<small>ACCUMULATED OBJECT</small></span><span class="panel-count" id="snapshot-count"></span><div class="panel-actions"><button data-action="snapshot-mode" aria-pressed="false">JSON</button><button data-action="copy" data-content="snapshot" aria-label="${V.copyLabel}">${icon('copy',11)}</button></div></div><div class="panel-description">随左侧 SSE 更新；与右侧完整结果使用相同字段布局，可逐字段对照。</div><div class="snapshot-body" id="snapshot-body"></div><div class="snapshot-foot">delta 按归属追加，done 全文替换。完整参数仍是 JSON 字符串，工具不会自动执行。</div></section>
+          <section class="panel"><div class="panel-head"><span class="layer-number two">02</span><span class="panel-title">拼接状态<small>ACCUMULATED OBJECT</small></span><span class="panel-count" id="snapshot-count"></span><div class="panel-actions"><button data-action="snapshot-mode" aria-pressed="false">JSON</button><button data-action="snapshot-diff" aria-pressed="true" aria-label="查看 Git diff">Diff</button><button data-action="copy" data-content="snapshot" aria-label="${V.copyLabel}">${icon('copy',11)}</button></div></div><div class="panel-description">随左侧 SSE 更新；与右侧完整结果使用相同字段布局，可逐字段对照。</div><div class="snapshot-body" id="snapshot-body"></div><div class="snapshot-foot">delta 按归属追加，done 全文替换。完整参数仍是 JSON 字符串，工具不会自动执行。</div></section>
           <section class="panel final-result-panel"><div class="panel-head"><span class="layer-number three">03</span><span class="panel-title">完整结果<small>FINAL RESULT</small></span><div class="panel-actions"><button data-action="copy" data-content="result" aria-label="复制完整结果 JSON">${icon('copy',11)}</button></div></div><div class="panel-description">同一次请求保存的完整结果，作为固定参照，不随回放变化。</div><div class="final-result-body"><div class="snapshot-json-label">${scene.protocol === 'chat' ? '项目 Go ChatResult · choices/tool_calls 按编号保存为对象' : '项目 Go ResponseObject · 已建模字段'}</div><div class="final-result-code"><pre class="code" tabindex="0" aria-label="日志完整结果 JSON">${C.highlight(C.pretty(scene.result.object))}</pre></div></div></section>
         </div>
         <div class="workbench-caption"><span>${icon('link',12)} 序号是本地 event_index；上游 sequence_number 保留在 JSON 中。</span><span>回放速率为演示速度，不代表真实网络耗时。</span></div>
@@ -106,11 +106,14 @@
     document.getElementById('source-code').innerHTML = source ? state.sourceMode === 'json' ? C.highlight(C.pretty(value)) : e(asFrame(source)) : '<span class="json-key">点击播放或选择一条事件开始。</span>';
     document.getElementById('snapshot-comparison').innerHTML = V.comparison(scene,snapshot);
     document.getElementById('snapshot-count').textContent = `#${state.cursor}`;
-    document.getElementById('snapshot-body').innerHTML = state.snapshotMode === 'json' ? V.render(scene,snapshot) : renderSnapshot(snapshot);
+    document.getElementById('snapshot-body').innerHTML = state.snapshotMode === 'diff' ? V.renderDiff(scene,snapshot) : state.snapshotMode === 'json' ? V.render(scene,snapshot) : renderSnapshot(snapshot);
     const snapshotToggle = document.querySelector('[data-action="snapshot-mode"]');
     snapshotToggle.textContent = V.toggleLabel(state.snapshotMode);
     snapshotToggle.classList.toggle('active',state.snapshotMode === 'json');
     snapshotToggle.setAttribute('aria-pressed',String(state.snapshotMode === 'json'));
+    const diffToggle = document.querySelector('[data-action="snapshot-diff"]');
+    diffToggle.classList.toggle('active',state.snapshotMode === 'diff');
+    diffToggle.setAttribute('aria-pressed',String(state.snapshotMode === 'diff'));
     document.getElementById('playback-step').innerHTML = `<b>${String(state.cursor).padStart(2,'0')}</b> / ${String(scene.sse.length).padStart(2,'0')} SSE`;
     document.getElementById('event-progress').value = state.cursor;
     document.getElementById('event-progress').setAttribute('aria-valuetext',`已接收 ${state.cursor} 条，共 ${scene.sse.length} 条 SSE`);
@@ -239,6 +242,7 @@
     if (action === 'prev') {stopPlayback();setCursor(state.cursor-1);}
     if (action === 'next') {stopPlayback();setCursor(state.cursor+1);}
     if (action === 'jump') {stopPlayback();setCursor(button.dataset.index);}
+    if (action === 'snapshot-diff') {state.snapshotMode = state.snapshotMode === 'diff' ? 'json' : 'diff';renderPlayback();}
     if (action === 'snapshot-mode') {state.snapshotMode = state.snapshotMode === 'json' ? 'visual' : 'json';renderPlayback();}
     if (action === 'source-mode') {state.sourceMode = state.sourceMode === 'json' ? 'frame' : 'json';renderPlayback();}
     if (action === 'copy') copy(content(button.dataset.content).text);
