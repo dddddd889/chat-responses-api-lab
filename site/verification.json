@@ -1,13 +1,13 @@
 {
   "pages": 15,
   "individual_scenarios": 14,
-  "data_tests_passed": 22,
-  "dom_tests_passed": 20,
+  "data_tests_passed": 25,
+  "dom_tests_passed": 21,
   "http_resources_checked": 22,
   "original_files_unchanged": 419,
   "old_markdown_files_unchanged": 3,
   "new_model_requests": 0,
-  "screen_qa": "not_run_browser_connection_disabled",
+  "screen_qa": "responses_tool_local_browser_checked",
   "hosting": "local_static_only_sites_tools_unavailable",
   "cache_metrics": {
     "cached_tokens": 128,
@@ -16,5 +16,7 @@
     "hit_rate": 0.4266666666666667
   },
   "token_field_descriptions": true,
-  "snapshot_json_toggle": true
+  "snapshot_json_toggle": true,
+  "snapshot_result_comparison": true,
+  "independently_replayed_stream_scenarios": 12
 }

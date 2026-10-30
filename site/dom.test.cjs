@@ -43,6 +43,7 @@ for (const scene of meta.scenarios) {
     assert.equal(document.querySelectorAll('.scenario-link').length,14);
     assert.equal(document.querySelectorAll('.sse-row').length,prepared.sse.length);
     assert.equal(document.querySelectorAll('.business-row').length,prepared.business.length);
+    if (scene.httpStatus !== 400) document.querySelector('[data-action="snapshot-mode"]').click();
     assert.equal(document.querySelectorAll('.protocol-switch a').length,2);
     if (scene.httpStatus === 400) {
       assert.ok(document.querySelector('.http-card').textContent.includes('未建立 SSE'));
@@ -57,6 +58,7 @@ for (const scene of meta.scenarios) {
 test('进度、参数拼接、来源范围、协议对照、筛选和搜索可以联动',{skip:!modulePath},async t => {
   const dom = await open('chat-multi_tool',t), window = dom.window, document = window.document;
   const prepared = C.prepare(meta.scenarios.find(scene => scene.id === 'chat-multi_tool'));
+  document.querySelector('[data-action="snapshot-mode"]').click();
   document.querySelector('[data-action="reset"]').click();
   assert.equal(document.querySelectorAll('#snapshot-body .tool-card').length,0); // 归零后当前拼接区不能提前出现未来工具。
   assert.equal(document.querySelector('#snapshot-body .usage-grid .total strong').textContent,'—');
@@ -102,6 +104,7 @@ test('播放会推进序号，暂停后停止，切换标签保留正确可访�
 test('双工具缓存命中 128、命中率 42.7%，回放归零时统计未知',{skip:!modulePath},async t => {
   for (const protocol of ['chat','responses']) {
     const dom = await open(protocol+'-multi_tool',t), document = dom.window.document;
+    document.querySelector('[data-action="snapshot-mode"]').click();
     assert.equal(document.querySelector('[data-metric="cache"] [data-cache="cached"]').textContent,'128');
     assert.equal(document.querySelector('[data-metric="cache"] [data-cache="rate"]').textContent,'42.7%');
     assert.equal(document.querySelector('#snapshot-body [data-cache="uncached"]').textContent,'172');
@@ -128,24 +131,27 @@ test('Token 中文字段说明保留原始命中别名，解释输入输出和�
   assert.ok(document.querySelector('.token-guide').textContent.includes('输入 300 = 命中 128 + 未命中 172'));
 });
 
-test('第二层全程保持累积结构，原始最终 JSON 单独展示',{skip:!modulePath},async t => {
+test('第二层默认展示日志同结构的 JSON，当前累积值可直接对照最终结果',{skip:!modulePath},async t => {
   for (const protocol of ['chat','responses']) {
     const dom = await open(protocol+'-multi_tool',t), window = dom.window, document = window.document;
     const prepared = C.prepare(meta.scenarios.find(scene => scene.id === protocol+'-multi_tool'));
     let copied;
     Object.defineProperty(window.navigator,'clipboard',{value:{writeText:async value => {copied=value;}},configurable:true});
-    document.querySelector('[data-action="snapshot-mode"]').click();
     const parsed = JSON.parse(document.querySelector('.snapshot-json .code').textContent);
-    assert.equal(parsed.preview,true);assert.ok(Array.isArray(parsed.tools));
-    assert.deepEqual(JSON.parse(document.querySelector('[aria-label="最终原始对象 JSON"]').textContent),prepared.result.object);
+    assert.deepEqual(parsed,prepared.result.object);
+    assert.equal(parsed.preview,undefined);
+    assert.ok(document.querySelector('#snapshot-comparison').textContent.includes('逐字段一致'));
+    assert.deepEqual(JSON.parse(document.querySelector('[aria-label="日志完整结果 JSON"]').textContent),prepared.result.object);
     assert.equal(document.querySelector('[data-action="snapshot-mode"]').getAttribute('aria-pressed'),'true');
     document.querySelector('[data-content="snapshot"]').click();await Promise.resolve();
     assert.deepEqual(JSON.parse(copied),parsed);
     document.querySelector('[data-action="reset"]').click();
     const preview = JSON.parse(document.querySelector('.snapshot-json .code').textContent);
-    assert.equal(preview.preview,true);assert.equal(preview.event_index,0);assert.equal(preview.usage,null);
+    assert.equal(preview.usage,null);
+    assert.equal(preview.id,'');
+    assert.equal(document.querySelector('#snapshot-comparison').textContent.includes('逐字段一致'),false);
     assert.deepEqual(Object.keys(preview),Object.keys(parsed));
-    assert.ok(document.querySelector('.snapshot-json-label').textContent.includes('演示'));
+    assert.ok(document.querySelector('.snapshot-json-label').textContent.includes('相同字段结构'));
     document.querySelector('[data-action="snapshot-mode"]').click();
     assert.equal(document.querySelector('.snapshot-json'),null);
     assert.equal(document.querySelector('#snapshot-body [data-cache="cached"]').textContent,'—');
@@ -159,4 +165,23 @@ test('明确 0 命中显示 0%，HTTP 没有 usage 时显示未知',{skip:!modul
   const unknown = await open('chat-http_error',t);
   assert.equal(unknown.window.document.querySelector('[data-metric="cache"] [data-cache="cached"]').textContent,'—');
   assert.equal(unknown.window.document.querySelector('[data-metric="cache"] [data-cache="rate"]').textContent,'—');
+});
+
+// 选择参数增量时，当前值、最终值与上游事件应能通过同一路径关联。
+test('逐步选择 SSE 会更新字段对照，完整结果保持不变，终点消除差异',{skip:!modulePath},async t => {
+  for (const protocol of ['chat','responses']) {
+    const dom = await open(protocol+'-tool',t), document = dom.window.document;
+    const scene = C.prepare(meta.scenarios.find(scene => scene.id === protocol+'-tool'));
+    const finalJSON = document.querySelector('[aria-label="日志完整结果 JSON"]').textContent;
+    const first = scene.business.find(record => record.object.type === 'tool_arguments_delta');
+    document.querySelector(`.sse-row[data-index="${first.event_index}"]`).click();
+    const panel = document.querySelector('#snapshot-comparison');
+    const expected = protocol === 'chat' ? '$.choices.0.tool_calls.0.function.arguments' : '$.output[0].arguments';
+    assert.ok(panel.querySelector('.comparison-update').textContent.includes(expected));
+    assert.ok(panel.querySelector('.comparison-table').textContent.includes(expected));
+    assert.equal(document.querySelector('[aria-label="日志完整结果 JSON"]').textContent,finalJSON);
+    document.querySelector(`.sse-row[data-index="${scene.sse.length}"]`).click();
+    assert.ok(panel.textContent.includes('逐字段一致'));
+    assert.equal(panel.querySelector('.comparison-table'),null);
+  }
 });

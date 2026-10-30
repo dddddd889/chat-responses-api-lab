@@ -25,7 +25,6 @@ for (const scene of scenes) {
     if (scene.httpError) {
       assert.equal(state.status,'http_error');assert.equal(scene.sse.length,0);assert.equal(scene.business.length,0);assert.equal(state.usage,null);
     } else {
-      assert.equal(state.authoritative,true);
       assert.deepEqual(state.tools,final.tools);assert.equal(state.text,final.text);assert.deepEqual(state.usage,final.usage);
       assert.equal(state.usage.total_tokens,scene.tokens);
       assert.equal(state.status,scene.kind === 'length' ? (scene.protocol === 'chat' ? 'truncated':'partial'):'complete');
@@ -128,4 +127,51 @@ test('原始最终对象不增加展示字段，缓存扩展也不会在终点�
     assert.equal(snapshot.usage.cached_tokens,final.usage.cached_tokens);
     assert.equal(scene.result.object.cached_tokens,undefined);
   }
+});
+
+// 对照必须独立重放；篡改最终日志不能让累积区跟着变化而伪造一致。
+const snapshotContext = {window:{StreamCore:C}};
+vm.runInNewContext(fs.readFileSync(path.join(__dirname,'web/snapshot.js'),'utf8'),snapshotContext);
+const V = snapshotContext.window.StreamSnapshotView;
+const plain = value => JSON.parse(JSON.stringify(value));
+test('所有流场景独立重放到终点均与 Go 日志一致，不读取最终对象反填',() => {
+  for (const scene of scenes.filter(item => !item.httpError)) {
+    const before = JSON.stringify(scene);
+    const final = plain(V.object(scene,{step:scene.sse.length}));
+    assert.deepEqual(final,scene.result.object,scene.id);
+    const altered = {...scene,result:{...scene.result,object:{wrong:true}}};
+    assert.deepEqual(plain(V.object(altered,{step:scene.sse.length})),final);
+    assert.ok(V.differences(final,altered.result.object).length > 0);
+    assert.equal(JSON.stringify(scene),before);
+    const empty = V.object(scene,{step:0});
+    assert.equal(empty.id,'');assert.equal(empty.usage,null);
+    assert.equal(empty.preview,undefined);assert.equal(empty.text,undefined);
+    for (let step=0;step<=scene.sse.length;step++) {
+      assert.deepEqual(Object.keys(V.object(scene,{step})),Object.keys(final));
+    }
+  }
+});
+
+test('工具参数中途保持原始字符串，当前字段路径与终点一一对应',() => {
+  for (const protocol of ['chat','responses']) {
+    const scene = scenes.find(item => item.id === protocol+'-multi_tool');
+    const first = scene.sse.find(record => protocol === 'chat'
+      ? record.object?.choices?.some(choice => choice.delta?.tool_calls?.some(tool => tool.function?.arguments))
+      : record.object?.type === 'response.function_call_arguments.delta');
+    const object = V.object(scene,{step:first.event_index});
+    const args = protocol === 'chat' ? object.choices[0].tool_calls[0].function.arguments : object.output[0].arguments;
+    assert.equal(args,'{"');
+    assert.equal(object.usage,null);
+    const diffs = V.differences(object,scene.result.object);
+    assert.ok(diffs.some(diff => diff.path === (protocol === 'chat' ? '$.choices.0.tool_calls.0.function.arguments' : '$.output[0].arguments')));
+    assert.ok(!JSON.stringify(object).includes('北京'));
+  }
+});
+
+test('差异比较忽略对象属性顺序，并转义模型文本与字段路径',() => {
+  assert.equal(V.differences({a:1,b:2},{b:2,a:1}).length,0);
+  const scene = {protocol:'chat',sse:[],result:{object:{'<script>':'<img src=x onerror=alert(1)>'}}};
+  const html = V.comparison(scene,{step:0,max:0});
+  assert.ok(!html.includes('<script>'));assert.ok(!html.includes('<img'));
+  assert.ok(html.includes('&lt;script&gt;'));assert.ok(html.includes('&lt;img'));
 });
