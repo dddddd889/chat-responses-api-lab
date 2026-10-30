@@ -201,10 +201,13 @@
     const atEnd = snapshot.step === snapshot.max;
     const diffs = atEnd ? differences(current,final) : [];
     const status = `<div class="result-match" role="status">${atEnd ? diffs.length ? `终点核对发现 ${diffs.length} 处字段差异` : '逐字段一致：当前状态已达到本次记录终点' : `正在构建完整对象 · SSE #${snapshot.step} / ${snapshot.max}`}</div>`;
+    // 用量只允许来自已经播放的事件；标明首次收到用量的位置，便于对照上游。
+    const usageRecord = scene.sse.find(record => record.event_index <= snapshot.step && (scene.protocol === 'chat' ? record.object?.usage : record.object?.response?.usage));
+    const usageSource = `<div class="snapshot-json-label" data-usage-source>${current.usage ? `usage 来源：上游 SSE #${usageRecord?.event_index ?? '未知'}，已收到请求用量` : `截至 SSE #${snapshot.step} 尚未收到 usage，当前值为 null；不从终点日志补入`}</div>`;
     const provenance = supplemented ? '<div class="reasoning-provenance">推理字段直接来自上游 SSE；历史 Go 日志未保存该字段，原文仍在“完整结果”页。</div>' : '';
-    if (mode === 'json') return status+provenance+`<div class="snapshot-json-label">截至 SSE #${snapshot.step} 的完整累积视图</div><div class="final-result-code"><pre class="code" tabindex="0" aria-label="完整结果视图 JSON">${C.highlight(C.pretty(current))}</pre></div>`;
+    if (mode === 'json') return status+usageSource+provenance+`<div class="snapshot-json-label">截至 SSE #${snapshot.step} 的完整累积视图</div><div class="final-result-code"><pre class="code" tabindex="0" aria-label="完整结果视图 JSON">${C.highlight(C.pretty(current))}</pre></div>`;
     const previousStep = Math.max(0,snapshot.step-1);
-    return status+provenance+renderLineDiff(object(scene,{step:previousStep}),current,`SSE #${previousStep}`,`SSE #${snapshot.step}`,'完整结果 Git diff');
+    return status+usageSource+provenance+renderLineDiff(object(scene,{step:previousStep}),current,`SSE #${previousStep}`,`SSE #${snapshot.step}`,'完整结果 Git diff');
   }
 
   window.StreamSnapshotView = {object,finalObject,render,renderDiff,diffLines,renderLineDiff,renderResult,differences,toggleLabel,copyLabel:'复制当前累积对象 JSON'};

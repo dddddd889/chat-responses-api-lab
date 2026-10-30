@@ -54,8 +54,8 @@
         ${stat('HTTP 状态',scene.httpStatus,isError ? '按预期拒绝' : '上游响应成功',isError ? 'warn':'good','check')}
         ${stat('完整 SSE 事件',scene.sse.length,isError ? '未进入 SSE 流' : scene.protocol === 'chat' ? '含最后一条 [DONE]' : '含响应生命周期事件','','flow')}
         ${stat('工具调用',count,count ? '独立 index · 独立参数' : '此场景没有函数工具调用','','braces')}
-        ${stat('整次请求用量',isError ? '—' : scene.tokens,isError ? '未返回 usage' : '输入 + 输出 · 不按事件累加','','clock')}
-        ${U.overview(final.usage)}
+        ${stat('日志终点用量（不随回放）',isError ? '—' : scene.tokens,isError ? '未返回 usage' : '输入 + 输出 · 不按事件累加','','clock')}
+        <div aria-label="日志终点缓存统计">${U.overview(final.usage)}</div>
       </div>
       ${U.definitions(scene)}
       <div class="tabs" role="tablist" aria-label="日志查看模式">
@@ -154,7 +154,7 @@
 
   function renderResult() {
     const object = scene.result?.object || scene.httpError?.object;
-    return `<div class="result-layout"><div class="result-code"><div class="inspector-head"><span>${scene.httpError ? 'HTTP ERROR · 非 SSE 响应' : 'RESULT · 日志完整结果'}</span><button data-action="copy" data-content="result">${icon('copy',11)} 复制 JSON</button></div><pre class="code" tabindex="0" aria-label="完整结果 JSON">${C.highlight(C.pretty(object))}</pre></div><aside class="panel result-aside"><div><h3>${scene.httpError ? '按预期拒绝' : statusLabel(final.status)}</h3><p>${scene.httpError ? '本场景使用无效模型名，官方接口返回 HTTP 400。错误正文不是 SSE，不生成工具或 usage。' : '这里保留项目 Go 累积器保存的原始对象，不是 Harness EventLog。回放视图会逐条拼接推理；旧日志遗漏的推理字段由 SSE 补全并标注来源，原文不变。'}</p>${scene.result ? `<p>覆盖本地 SSE #${scene.result.first_event_index}–${scene.result.last_event_index}。${scene.result.error ? `<br>${e(scene.result.error)}` : ''}</p>` : ''}</div><div><button class="outline-btn" data-action="download" data-content="result">${icon('download',13)} 下载完整对象</button><button class="outline-btn" data-action="download" data-content="business">${icon('download',13)} 下载统一事件</button></div><div class="proof-detail">完整源日志 SHA256<code>${e(scene.sourceSHA256)}</code><p>样本时间：${dataset.date}<br>模型：${dataset.model}<br>浏览、播放和下载均不请求模型。</p></div></aside></div>`;
+    return `<div class="result-layout"><div class="result-code"><div class="inspector-head"><span>${scene.httpError ? 'HTTP ERROR · 非 SSE 响应' : 'RESULT · 日志终点原文（不随回放）'}</span><button data-action="copy" data-content="result">${icon('copy',11)} 复制 JSON</button></div><pre class="code" tabindex="0" aria-label="完整结果 JSON">${C.highlight(C.pretty(object))}</pre></div><aside class="panel result-aside"><div><h3>${scene.httpError ? '按预期拒绝' : statusLabel(final.status)}</h3><p>${scene.httpError ? '本场景使用无效模型名，官方接口返回 HTTP 400。错误正文不是 SSE，不生成工具或 usage。' : '这里展示整段记录结束后保存的原始对象，不随回放进度变化。usage 来自后面的用量事件；当前进度尚未收到时，两栏回放仍应为 null。回放视图会逐条拼接推理；旧日志遗漏的推理字段由 SSE 补全并标注来源，原文不变。'}</p>${scene.result ? `<p>覆盖本地 SSE #${scene.result.first_event_index}–${scene.result.last_event_index}。${scene.result.error ? `<br>${e(scene.result.error)}` : ''}</p>` : ''}</div><div><button class="outline-btn" data-action="download" data-content="result">${icon('download',13)} 下载完整对象</button><button class="outline-btn" data-action="download" data-content="business">${icon('download',13)} 下载统一事件</button></div><div class="proof-detail">完整源日志 SHA256<code>${e(scene.sourceSHA256)}</code><p>样本时间：${dataset.date}<br>模型：${dataset.model}<br>浏览、播放和下载均不请求模型。</p></div></aside></div>`;
   }
 
   function renderHTTP() {
