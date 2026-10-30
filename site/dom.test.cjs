@@ -128,7 +128,7 @@ test('Token 中文字段说明保留原始命中别名，解释输入输出和�
   assert.ok(document.querySelector('.token-guide').textContent.includes('输入 300 = 命中 128 + 未命中 172'));
 });
 
-test('第二层可以切换并复制原始最终 JSON，中途 JSON 明确标为演示状态',{skip:!modulePath},async t => {
+test('第二层全程保持累积结构，原始最终 JSON 单独展示',{skip:!modulePath},async t => {
   for (const protocol of ['chat','responses']) {
     const dom = await open(protocol+'-multi_tool',t), window = dom.window, document = window.document;
     const prepared = C.prepare(meta.scenarios.find(scene => scene.id === protocol+'-multi_tool'));
@@ -136,13 +136,15 @@ test('第二层可以切换并复制原始最终 JSON，中途 JSON 明确标为
     Object.defineProperty(window.navigator,'clipboard',{value:{writeText:async value => {copied=value;}},configurable:true});
     document.querySelector('[data-action="snapshot-mode"]').click();
     const parsed = JSON.parse(document.querySelector('.snapshot-json .code').textContent);
-    assert.deepEqual(parsed,prepared.result.object);assert.equal(parsed.preview,undefined);
+    assert.equal(parsed.preview,true);assert.ok(Array.isArray(parsed.tools));
+    assert.deepEqual(JSON.parse(document.querySelector('[aria-label="最终原始对象 JSON"]').textContent),prepared.result.object);
     assert.equal(document.querySelector('[data-action="snapshot-mode"]').getAttribute('aria-pressed'),'true');
     document.querySelector('[data-content="snapshot"]').click();await Promise.resolve();
-    assert.deepEqual(JSON.parse(copied),prepared.result.object);
+    assert.deepEqual(JSON.parse(copied),parsed);
     document.querySelector('[data-action="reset"]').click();
     const preview = JSON.parse(document.querySelector('.snapshot-json .code').textContent);
     assert.equal(preview.preview,true);assert.equal(preview.event_index,0);assert.equal(preview.usage,null);
+    assert.deepEqual(Object.keys(preview),Object.keys(parsed));
     assert.ok(document.querySelector('.snapshot-json-label').textContent.includes('演示'));
     document.querySelector('[data-action="snapshot-mode"]').click();
     assert.equal(document.querySelector('.snapshot-json'),null);
