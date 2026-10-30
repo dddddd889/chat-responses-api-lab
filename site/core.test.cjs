@@ -272,3 +272,21 @@ test('交错推理项、正文与摘要按索引隔离，done 全文校准，不
   assert.deepEqual(plain(V.object(scene,{step:10})),plain(response));
   assert.equal(scene.result.object.output[0].summary,undefined);
 });
+
+// 每条事件都检查用量来源；最终日志即使存在用量也不能提前泄漏到回放。
+test('所有场景 usage 仅在上游用量事件到达后出现', () => {
+  for (const scene of scenes.filter(scene => !scene.httpError)) {
+    let received = null;
+    for (let step = 0; step <= scene.sse.length; step++) {
+      const event = scene.sse[step-1]?.object;
+      const wire = scene.protocol === 'chat' ? event?.usage : event?.response?.usage;
+      if (wire) received = wire;
+      const current = V.object(scene,{step});
+      const summary = C.snapshot(scene,step);
+      assert.equal(current.usage !== null,received !== null,`${scene.id} #${step} 完整对象`);
+      assert.equal(summary.usage !== null,received !== null,`${scene.id} #${step} 内容摘要`);
+      if (received) assert.equal(current.usage.total_tokens,received.total_tokens);
+      else assert.equal(current.usage,null);
+    }
+  }
+});

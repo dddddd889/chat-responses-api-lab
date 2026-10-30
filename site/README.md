@@ -67,3 +67,5 @@ Chat 的 `reasoning_content` 是提供方扩展字段，逐条追加；Responses
 实现核对了 Harness 锁定的 pi-ai 1.1.0（不是本地旧版 node_modules）：pi-ai 累积 thinking 并发出 thinking_delta，Harness 适配成 reasoning-delta，assembler 按内容块累积。Harness 的 pi-ai 补丁只涉及工具参数解析，未改变推理逻辑。本次做源码核对和观察室回放验证，没有运行 Harness 或 pi-ai 的模型请求。
 
 参考：[Harness 适配器](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/packages/llm/llm-pi-ai/src/stream.ts)、[OpenAI Responses 流事件](https://developers.openai.com/api/reference/resources/responses/streaming-events#response.reasoning_text.delta)。
+
+用量来源：回放两栏的 usage 仅来自当前进度已经收到的上游事件，未收到时保持 null。右栏标出用量来源的 SSE 序号。顶部概览、字段说明和“完整结果”标签页明确标为日志终点数据，不随回放变化。

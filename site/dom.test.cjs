@@ -341,3 +341,23 @@ test('思考内容逐条显示在拼接状态和完整结果，终点不重复�
     assert.equal(document.querySelector('#snapshot-body .text-output:not(.reasoning-output)').textContent,'391');
   }
 });
+
+// 在用量到达前后直接读两栏 JSON，防止日志终点数据混入当前进度。
+test('usage 来源明确，两栏在用量事件前为 null，事件到达后同步出现',{skip:!modulePath},async t => {
+  for (const id of ['chat-thinking','responses-thinking']) {
+    const dom = await open(id,t), document = dom.window.document;
+    const scene = C.prepare(meta.scenarios.find(scene => scene.id === id));
+    const received = scene.sse.find(record => scene.protocol === 'chat' ? record.object?.usage : record.object?.response?.usage);
+    const progress = document.querySelector('#event-progress');
+    for (const step of [received.event_index-1,received.event_index,0]) {
+      progress.value = step;progress.dispatchEvent(new dom.window.Event('input',{bubbles:true}));
+      const left = JSON.parse(document.querySelector('[aria-label="合并对象 JSON"]').textContent);
+      const right = JSON.parse(document.querySelector('[aria-label="完整结果视图 JSON"]').textContent);
+      assert.deepEqual(left.usage,right.usage);
+      const source = document.querySelector('[data-usage-source]').textContent;
+      if (step < received.event_index) {assert.equal(right.usage,null);assert.match(source,/尚未收到 usage/);}
+      else {assert.ok(right.usage.total_tokens>0);assert.ok(source.includes(`SSE #${received.event_index}`));}
+    }
+    assert.match(document.querySelector('#pane-result').textContent,/不随回放进度变化/);
+  }
+});
