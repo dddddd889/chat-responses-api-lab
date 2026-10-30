@@ -14,7 +14,7 @@
   const counterpart = scenes.find(item => item.kind === scene.kind && item.protocol !== scene.protocol);
   const params = new URLSearchParams(location.search);
   const app = document.getElementById('app');
-  const state = {cursor:params.has('step') ? Math.max(0,Math.min(scene.sse.length,Number(params.get('step')) || 0)) : scene.sse.length, tab:['replay','compare','result'].includes(params.get('tab')) ? params.get('tab') : 'replay', filter:'all', search:'', selectedBusiness:null, sourceMode:'json', comparisonPinned:params.get('pin') === '1', snapshotMode:params.get('view') === 'visual' ? 'visual' : 'json', playing:false, interval:650, timer:null};
+  const state = {cursor:params.has('step') ? Math.max(0,Math.min(scene.sse.length,Number(params.get('step')) || 0)) : scene.sse.length, tab:['replay','compare','result'].includes(params.get('tab')) ? params.get('tab') : 'replay', filter:'all', search:'', selectedBusiness:null, sourceMode:'json', snapshotMode:params.get('view') === 'visual' ? 'visual' : 'json', playing:false, interval:650, timer:null};
   let toastTimer;
   const icon = (name,size=15) => {
     const paths = {play:'<path d="m8 5 11 7-11 7Z"/>',pause:'<path d="M8 5v14M16 5v14"/>',back:'<path d="M6 5v14m12-14L8 12l10 7Z"/>',prev:'<path d="m15 5-7 7 7 7"/>',next:'<path d="m9 5 7 7-7 7"/>',code:'<path d="m8 6-6 6 6 6m8-12 6 6-6 6m-5 2 2-16"/>',flow:'<rect x="3" y="4" width="6" height="5" rx="1"/><rect x="15" y="15" width="6" height="5" rx="1"/><path d="M6 9v8h9m-1-4 4 4-4 4"/>',braces:'<path d="M9 3H7v6l-3 3 3 3v6h2m6-18h2v6l3 3-3 3v6h-2"/>',copy:'<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M15 8V3H3v12h5"/>',download:'<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',compare:'<path d="M12 3v18M4 7h4v10H4M16 7h4v10h-4"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/>',check:'<path d="m5 12 4 4L19 6"/>',link:'<path d="m10 13 4-4m-6 7-2 2a4 4 0 0 1-6-6l5-5a4 4 0 0 1 6 0m2 1 2-2a4 4 0 0 1 6 6l-5 5a4 4 0 0 1-6 0"/>'};
@@ -73,7 +73,7 @@
           <section class="panel business-panel"><div class="panel-head"><span class="layer-number three">03</span><span class="panel-title">统一业务事件<small>NORMALIZED EVENTS</small></span><span class="panel-count">${scene.business.length}</span></div><div class="panel-description">两种接口使用相同事件名称。点击可联动来源范围。</div><div class="business-list" id="business-list"></div></section>
         </div>
         <div class="workbench-caption"><span>${icon('link',12)} 序号是本地 event_index；上游 sequence_number 保留在 JSON 中。</span><span>回放速率为演示速度，不代表真实网络耗时。</span></div>
-        <section class="panel result-comparison" id="result-comparison" aria-label="拼接状态与完整结果对照"><div class="panel-head"><span class="panel-title">拼接状态 → 完整结果<small>FIELD COMPARISON</small></span><div class="panel-actions"><button data-action="pin-comparison" aria-controls="result-comparison" aria-pressed="false">固定到右侧</button></div></div><p class="panel-description">${scene.protocol === 'chat' ? '当前与最终对象都使用项目 Go ChatResult 结构；choices/tool_calls 按编号保存为对象，并非 OpenAI 原始响应数组。' : '当前与最终对象都使用项目 Go ResponseObject 已建模字段；上游完整 JSON 及扩展字段保留在事件检查器。'} 对照区始终展示同一次请求的日志结果。</p><div id="snapshot-comparison"></div><details open><summary class="panel-description">日志完整结果 · 不随回放变化</summary><pre class="code" tabindex="0" aria-label="日志完整结果 JSON">${C.highlight(C.pretty(scene.result?.object))}</pre></details></section>
+        <section class="panel result-comparison"><div class="panel-head"><span class="panel-title">拼接状态 → 完整结果<small>FIELD COMPARISON</small></span></div><p class="panel-description">${scene.protocol === 'chat' ? '当前与最终对象都使用项目 Go ChatResult 结构；choices/tool_calls 按编号保存为对象，并非 OpenAI 原始响应数组。' : '当前与最终对象都使用项目 Go ResponseObject 已建模字段；上游完整 JSON 及扩展字段保留在事件检查器。'} 对照区始终展示同一次请求的日志结果。</p><div id="snapshot-comparison"></div><details open><summary class="panel-description">日志完整结果 · 不随回放变化</summary><pre class="code" tabindex="0" aria-label="日志完整结果 JSON">${C.highlight(C.pretty(scene.result?.object))}</pre></details></section>
         <div class="flow-strip"><b>resp.Body</b><span class="arrow">→</span><span>SSE 解帧</span><span class="arrow">→</span><span>Chat / Responses 解码</span><span class="arrow">→</span><span>按 index 合并</span><span class="arrow">→</span><b>result + business events</b></div>`}
       </section>
       <section id="pane-compare" role="tabpanel" aria-labelledby="tab-compare" hidden>${renderCompare()}</section>
@@ -168,23 +168,12 @@
 
   function selectTab(tab) {
     state.tab = tab;
-    renderComparisonPin();
     if (tab !== 'replay') stopPlayback();
     for (const name of ['replay','compare','result']) {
       const button = document.getElementById(`tab-${name}`);
       button.classList.toggle('active',name === tab);button.setAttribute('aria-selected',String(name === tab));button.tabIndex = name === tab ? 0 : -1;
       document.getElementById(`pane-${name}`).hidden = name !== tab;
     }
-  }
-
-  // 保留原节点和内容状态，只切换定位；其他标签页不占用右侧空间。
-  function renderComparisonPin() {
-    const button = document.querySelector('[data-action="pin-comparison"]');
-    const active = state.comparisonPinned && state.tab === 'replay' && !!button;
-    document.body.classList.toggle('comparison-pinned',active);
-    if (!button) return;
-    button.textContent = state.comparisonPinned ? '取消固定' : '固定到右侧';
-    button.setAttribute('aria-pressed',String(state.comparisonPinned));
   }
 
   function setCursor(value, preserveBusiness=false) {
@@ -261,19 +250,12 @@
       stopPlayback();state.selectedBusiness = Number(button.dataset.businessIndex);
       setCursor(scene.business[state.selectedBusiness].event_index,true);
     }
-    if (action === 'pin-comparison') {
-      state.comparisonPinned = !state.comparisonPinned;
-      renderComparisonPin();
-      // 固定后回到回放操作区；取消时定位回原来的对照区。
-      const target = document.querySelector(state.comparisonPinned ? '.playback-bar' : '#result-comparison');
-      target?.scrollIntoView?.({block:'start'});
-    }
     if (action === 'snapshot-mode') {state.snapshotMode = state.snapshotMode === 'json' ? 'visual' : 'json';renderPlayback();}
     if (action === 'source-mode') {state.sourceMode = state.sourceMode === 'json' ? 'frame' : 'json';renderPlayback();}
     if (action === 'copy') copy(content(button.dataset.content).text);
     if (action === 'download') download(button.dataset.content);
     if (action === 'copy-link') {
-      const url = new URL(location.href);url.searchParams.set('step',state.cursor);url.searchParams.set('tab',state.tab);url.searchParams.set('view',state.snapshotMode);if (state.comparisonPinned) url.searchParams.set('pin','1');else url.searchParams.delete('pin');copy(url.href);
+      const url = new URL(location.href);url.searchParams.set('step',state.cursor);url.searchParams.set('tab',state.tab);url.searchParams.set('view',state.snapshotMode);copy(url.href);
     }
   });
   document.getElementById('scenario-search').addEventListener('input',event => {state.search = event.target.value;renderNav();});
