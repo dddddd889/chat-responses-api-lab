@@ -1,13 +1,13 @@
 {
   "pages": 15,
   "individual_scenarios": 14,
-  "data_tests_passed": 31,
-  "dom_tests_passed": 30,
+  "data_tests_passed": 33,
+  "dom_tests_passed": 32,
   "http_resources_checked": 22,
   "original_files_unchanged": 419,
   "old_markdown_files_unchanged": 3,
   "new_model_requests": 0,
-  "screen_qa": "browser_checked_reasoning_text_EventLog_protocol_route_restore",
+  "screen_qa": "chat_step0_We_We_need_jstep29_null_jstep30_commit_and_reasoning_history",
   "hosting": "github_pages",
   "cache_metrics": {
     "cached_tokens": 128,
@@ -54,5 +54,9 @@
   "journey_text_reasoning_checked": true,
   "journey_length_limited_checked": true,
   "protocol_navigation_route_checked": true,
-  "overview_cards_removed": true
+  "overview_cards_removed": true,
+  "journey_progressive_replay": true,
+  "journey_route_jstep": true,
+  "eventlog_commit_boundary_checked": true,
+  "chat_reasoning_history_mapping_checked": true
 }

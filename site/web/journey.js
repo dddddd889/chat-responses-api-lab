@@ -91,6 +91,52 @@
     return {tools,view,selected,related,selectedIndex,blocked,piBlocks,harnessBlocks,message,event,upstream,sourceEvent,piUsage,usage,lengthLimited};
   }
 
+  const replayCache = new WeakMap();
+  // 同一场景和候选只建立一次时间轴，拖动进度时直接读取不可变快照。
+  function timeline(scene, requestedKey) {
+    const choice = C.finalView(scene).tools.find(tool => toolKey(tool) === requestedKey)?.choice ?? 0;
+    let choices = replayCache.get(scene);
+    if (!choices) {choices=new Map();replayCache.set(scene,choices);}
+    if (!choices.has(choice)) choices.set(choice,window.StreamJourneyReplay.build(scene,choice));
+    return choices.get(choice);
+  }
+
+  // 从上游 SSE 序号定位过程位置，兼容已有 step 深链接；后续独立使用 jstep。
+  function position(scene, requestedKey, sourceStep) {
+    const frames=timeline(scene,requestedKey);
+    if (sourceStep === 0) return 0;
+    let index=0;
+    frames.forEach((frame,i) => {if (frame.sse <= sourceStep) index=i;});
+    return index;
+  }
+
+  // 过程回放同时展示本步事件与两边累积值，不借用终点片段。
+  function liveStage(scene, data, stage) {
+    const frame=data.replay;
+    const status = frame.event ? '已到达 session.append（结构演示）' : frame.error ? frame.error : '尚未写入 assistant/message；内容仍在累积或等待终止检查';
+    if (stage === 'response' && scene.httpError) return code('真实 HTTP 错误响应',scene.httpError.object);
+    if (stage === 'response') return `<p>当前过程步 #${data.progress}，来源上游 SSE #${frame.sse}。Chat 的 reasoning_content 保留在上游事件中；旧 Go 日志原文没有该字段。</p>${code('当前上游事件',frame.raw,'过程上游事件')}<button class="outline-btn" data-action="journey-replay" data-index="${frame.sse}">定位上游 SSE #${frame.sse}</button>${code('截至当前 SSE 的累积对象',window.StreamSnapshotView.object(scene,{step:frame.sse}),'过程上游累积对象')}`;
+    if (stage === 'adapter') return `<p>本步：${e(frame.label)}。pi-ai 与 Harness 按块索引对应；以下内容只包含已播放事件。</p><div class="journey-pair">${code('本步 pi-ai 事件（演示）',frame.piEvent,'过程 pi-ai 事件')}${code('本步 Harness chunks（演示）',frame.chunks,'过程 Harness chunks')}</div><div class="journey-pair">${code('pi-ai 累积内容',{role:'assistant',content:frame.piBlocks},'过程 pi-ai 累积内容')}${code('Harness 累积内容',{role:'assistant',content:frame.harnessBlocks},'过程 Harness 累积内容')}</div><p>thinking_delta → reasoning-delta；text_delta → text-delta；end 全文校准。工具参数在结束事件才完成对象解析。</p>${code('当前已交给 Harness 的 usage',frame.usage,'过程 usage')}<p>usage 只在 pi-ai 终止事件映射后交给 Harness；finish=${e(frame.finish || '尚未收到')}。</p>`;
+    if (stage === 'eventlog') {
+      const message={role:'assistant',content:frame.harnessBlocks};
+      // DeepSeek 同源 Chat 历史映射示例，不冒充实际发送的下一次请求。
+      const chat={role:'assistant',content:frame.harnessBlocks.filter(block=>block.type==='text').map(block=>block.text).join('') || null};
+      const reasoning=frame.harnessBlocks.filter(block=>block.type==='reasoning').map(block=>block.text).join('\n');
+      if (reasoning) chat.reasoning_content=reasoning;
+      const calls=frame.harnessBlocks.filter(block=>block.type==='tool-call');
+      if (calls.length) chat.tool_calls=calls.map(block=>({id:block.id,type:'function',function:{name:block.name,arguments:block.arguments}}));
+      return `<p role="status" data-journey-commit>${e(status)}</p><div class="journey-pair">${code('收集器内容快照（尚不等于正式消息）',message,'过程收集器内容')}${code('EventLog assistant/message（演示）',frame.event,'过程 EventLog')}</div>${frame.event && scene.protocol === 'chat' ? `<p>同源 DeepSeek Chat 回放示例：EventLog 的 reasoning 块经 replay.ts 恢复为 pi-ai thinking，再由 Chat 序列化器写回 reasoning_content。真实回放还依赖 source.replayState 保存的签名、模型来源与兼容配置；本样本未采集这些运行时元数据，以下仅演示消息字段。</p>${code('后续 Chat messages 中的 assistant 映射（不是已发送请求）',{messages:[chat]},'过程 Chat 历史映射')}` : ''}<p class="journey-note">这里只重放源码映射。没有实际执行 session.append；省略未采集的消息 id、source.replayState、seq/time、turn/step、stream。正式 assistant/message 仅在终止检查通过后出现。</p><div class="journey-sources">${source('packages/core/agent-loop/src/agent.ts',528,'会话提交源码')}${source('packages/llm/llm-pi-ai/src/replay.ts',204,'推理恢复源码')}</div>`;
+    }
+    if (stage === 'tool' && !data.selected) return toolStage(scene,data);
+    if (stage === 'tool' && !frame.event) return '<div class="journey-empty">尚未提交 assistant 消息，尚不能进入工具执行；实际工具记录未采集。</div>';
+    return stage === 'tool' ? toolStage(scene,data) : requestStage(scene,data);
+  }
+
+  // 独立过程进度包含流内事件和终止后的提交节点，控件随页面吸顶。
+  function controls(data, playing) {
+    return `<div class="playback-bar journey-playback"><button data-action="journey-reset" aria-label="完整过程回到开头">↤</button><button data-action="journey-prev" aria-label="完整过程上一步" ${data.progress===0 ? 'disabled' : ''}>←</button><button data-action="journey-play" aria-label="${playing ? '暂停完整过程' : '播放完整过程'}" ${data.max===0 ? 'disabled' : ''}>${playing ? '暂停' : '播放'}</button><button data-action="journey-next" aria-label="完整过程下一步" ${data.progress===data.max ? 'disabled' : ''}>→</button><input type="range" id="journey-progress" min="0" max="${data.max}" value="${data.progress}" aria-label="完整过程回放进度"><span>${data.progress} / ${data.max} 步 · SSE #${data.replay.sse}</span><span>${e(data.replay.label)}</span></div>`;
+  }
+
   // JSON 内容先转义再高亮；卡片标题说明数据是实际记录还是演示片段。
   function code(title, value, label=title) {
     return `<section class="journey-code-card"><h3>${e(title)}</h3><pre class="code" tabindex="0" aria-label="${e(label)}">${C.highlight(C.pretty(value))}</pre></section>`;
@@ -150,15 +196,20 @@
   }
 
   // 阶段与调用独立选择，切换后保留同一个调用标识，数据来源始终可见。
-  function render(scene, requestedStage='eventlog', requestedKey) {
+  function render(scene, requestedStage='eventlog', requestedKey, progress, playing=false) {
     const data = prepare(scene,requestedKey);
+    if (progress !== undefined) {
+      const frames=timeline(scene,requestedKey);
+      data.max=frames.length-1;data.progress=Math.max(0,Math.min(data.max,Math.trunc(progress) || 0));
+      data.replay=frames[data.progress];
+    }
     const stage = stages.find(item => item.id === requestedStage) || stages[0];
     const renderers = {response:responseStage,adapter:adapterStage,eventlog:eventlogStage,tool:toolStage,request:requestStage};
     const stageStatus = item => !data.selected && item.id === 'tool' ? '不适用：无工具调用' : data.blocked && ['adapter','eventlog'].includes(item.id) ? '演示条件未满足' : item.status;
     const buttons = stages.map((item,index) => `<button data-action="journey-stage" data-stage="${item.id}" ${item.id === stage.id ? 'aria-current="step"' : ''}><span>${index+1}</span><strong>${item.name}</strong><small>${stageStatus(item)}</small></button>`).join('');
     const calls = data.tools.map(tool => `<button data-action="journey-tool" data-tool="${e(toolKey(tool))}" aria-pressed="${toolKey(tool) === (data.selected && toolKey(data.selected))}">${e(tool.name)} · choice ${tool.choice} / tool ${tool.index}<code>${e(tool.callID)}</code></button>`).join('');
-    return `<div class="journey-intro"><h2>${data.selected ? '一次工具调用的完整过程' : '本次回复的完整处理过程'}</h2><p>此页读取整次记录终点，独立于逐步回放 step。请求 1：真实 API 样本；转换与会话提交：源码结构演示；工具执行与请求 2：未采集。</p><p>流程按处理层次组织；适配器转换会与接收流同时推进，不代表每一步都要等待上一步全部完成。</p></div><nav class="journey-rail" aria-label="调用处理阶段">${buttons}</nav>${calls ? `<div class="journey-calls" aria-label="选择关联工具调用">${calls}</div>` : ''}<section class="panel journey-stage-panel"><div class="panel-head"><span class="panel-title">${e(stage.name)}</span><span class="badge ${stage.id === 'response' ? 'good' : 'warn'}">${e(stageStatus(stage))}</span></div>${identity(scene,data)}<div class="journey-stage-content">${renderers[stage.id](scene,data)}</div></section><p class="journey-provenance">转换依据：Harness 源码 ${revision.slice(0,7)}。浏览本视图不执行工具、不写会话、不请求模型。</p>`;
+    return `<div class="journey-intro"><h2>${data.selected ? '本次工具响应的处理回放' : '本次模型响应的处理回放'}</h2><p>当前样本仅采集一次模型请求，不是包含工具后续响应的完整 turn。过程进度 jstep 独立保存；每一步展示当前 SSE 引起的映射，最后单独演示会话提交。请求 1：真实 API 样本；转换与会话提交：源码结构演示；工具执行与请求 2：未采集。</p><p>流程按处理层次组织；适配器转换会与接收流同时推进，不代表每一步都要等待上一步全部完成。</p></div>${data.replay ? controls(data,playing) : ''}<nav class="journey-rail" aria-label="调用处理阶段">${buttons}</nav>${calls ? `<div class="journey-calls" aria-label="选择关联工具调用">${calls}</div>` : ''}<section class="panel journey-stage-panel"><div class="panel-head"><span class="panel-title">${e(stage.name)}</span><span class="badge ${stage.id === 'response' ? 'good' : 'warn'}">${e(stageStatus(stage))}</span></div>${identity(scene,data)}<div class="journey-stage-content">${data.replay ? liveStage(scene,data,stage.id) : renderers[stage.id](scene,data)}</div></section><p class="journey-provenance">转换依据：Harness 源码 ${revision.slice(0,7)}。浏览本视图不执行工具、不写会话、不请求模型。</p>`;
   }
 
-  window.StreamJourney = {stages,prepare,render,toolKey};
+  window.StreamJourney = {stages,prepare,render,toolKey,timeline,position};
 })();

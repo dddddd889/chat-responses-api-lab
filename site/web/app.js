@@ -16,6 +16,9 @@
   const params = new URLSearchParams(location.search);
   const app = document.getElementById('app');
   const state = {cursor:params.has('step') ? Math.max(0,Math.min(scene.sse.length,Math.trunc(Number(params.get('step'))) || 0)) : scene.sse.length, tab:['replay','journey','compare','result'].includes(params.get('tab')) ? params.get('tab') : 'replay', journeyStage:J.stages.some(stage => stage.id === params.get('stage')) ? params.get('stage') : 'eventlog', journeyTool:params.get('call'), search:'', sourceMode:params.get('source') === 'frame' ? 'frame' : 'json', resultMode:params.get('result_view') === 'diff' ? 'diff' : 'json', snapshotMode:['json','visual','diff'].includes(params.get('view')) ? params.get('view') : 'diff', playing:false, interval:650, timer:null};
+  // 兼容旧 step 链接；新链接用 jstep 单独保存过程进度。
+  state.jcursor = params.has('jstep') ? Math.max(0,Math.min(J.timeline(scene,state.journeyTool).length-1,Math.trunc(Number(params.get('jstep'))) || 0)) : params.has('step') ? J.position(scene,state.journeyTool,state.cursor) : J.timeline(scene,state.journeyTool).length-1;
+  state.jplaying=false;state.jtimer=null;
   let toastTimer;
   const icon = (name,size=15) => {
     const paths = {play:'<path d="m8 5 11 7-11 7Z"/>',pause:'<path d="M8 5v14M16 5v14"/>',back:'<path d="M6 5v14m12-14L8 12l10 7Z"/>',prev:'<path d="m15 5-7 7 7 7"/>',next:'<path d="m9 5 7 7-7 7"/>',code:'<path d="m8 6-6 6 6 6m8-12 6 6-6 6m-5 2 2-16"/>',flow:'<rect x="3" y="4" width="6" height="5" rx="1"/><rect x="15" y="15" width="6" height="5" rx="1"/><path d="M6 9v8h9m-1-4 4 4-4 4"/>',braces:'<path d="M9 3H7v6l-3 3 3 3v6h2m6-18h2v6l3 3-3 3v6h-2"/>',copy:'<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M15 8V3H3v12h5"/>',download:'<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',compare:'<path d="M12 3v18M4 7h4v10H4M16 7h4v10h-4"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/>',check:'<path d="m5 12 4 4L19 6"/>',link:'<path d="m10 13 4-4m-6 7-2 2a4 4 0 0 1-6-6l5-5a4 4 0 0 1 6 0m2 1 2-2a4 4 0 0 1 6 6l-5 5a4 4 0 0 1-6 0"/>'};
@@ -29,6 +32,7 @@
     const target = byID.get(id), url = new URL(path,location.href);
     url.search = routeURL().search;
     url.searchParams.set('step',Math.min(state.cursor,target.sse.length));
+    url.searchParams.set('jstep',Math.min(state.jcursor,J.timeline(target).length-1));
     if (!C.finalView(target).tools.some(tool => J.toolKey(tool) === state.journeyTool)) url.searchParams.delete('call');
     return url.href;
   };
@@ -72,7 +76,7 @@
         <div class="workbench-caption"><span>${icon('link',12)} 序号是本地 event_index；上游 sequence_number 保留在 JSON 中。</span><span>回放速率为演示速度，不代表真实网络耗时。</span></div>
         <div class="flow-strip"><b>resp.Body</b><span class="arrow">→</span><span>SSE 解帧</span><span class="arrow">→</span><span>Chat / Responses 解码</span><span class="arrow">→</span><span>按 index 合并</span><span class="arrow">→</span><b>完整结果</b></div>`}
       </section>
-      <section id="pane-journey" role="tabpanel" aria-labelledby="tab-journey" hidden>${J.render(scene,state.journeyStage,state.journeyTool)}</section>
+      <section id="pane-journey" role="tabpanel" aria-labelledby="tab-journey" hidden>${J.render(scene,state.journeyStage,state.journeyTool,state.jcursor,state.jplaying)}</section>
       <section id="pane-compare" role="tabpanel" aria-labelledby="tab-compare" hidden>${renderCompare()}</section>
       <section id="pane-result" role="tabpanel" aria-labelledby="tab-result" hidden>${renderResult()}</section>
       <footer class="page-footer"><div>真实样本 · ${dataset.model} · 所有交互均在浏览器内进行</div><div class="footer-actions"><button data-action="copy-link">${icon('link',11)} 复制当前视图链接</button><button data-action="download" data-content="combined">${icon('download',11)} 下载完整日志</button></div></footer>`;
@@ -164,7 +168,7 @@
   // 地址保存页面状态；切换标签/阶段新增历史，连续回放只更新当前历史。
   function routeURL() {
     const url = new URL(location.href);
-    for (const [key,value] of Object.entries({tab:state.tab,step:state.cursor,stage:state.journeyStage,view:state.snapshotMode,result_view:state.resultMode,source:state.sourceMode})) url.searchParams.set(key,value);
+    for (const [key,value] of Object.entries({tab:state.tab,step:state.cursor,jstep:state.jcursor,stage:state.journeyStage,view:state.snapshotMode,result_view:state.resultMode,source:state.sourceMode})) url.searchParams.set(key,value);
     if (state.journeyTool) url.searchParams.set('call',state.journeyTool);
     else url.searchParams.delete('call');
     return url;
@@ -182,6 +186,7 @@
     state.tab = tab;
     syncRoute(historyMode);
     if (tab !== 'replay') stopPlayback();
+    if (tab !== 'journey') stopJourney();
     for (const name of ['replay','journey','compare','result']) {
       const button = document.getElementById(`tab-${name}`);
       button.classList.toggle('active',name === tab);button.setAttribute('aria-selected',String(name === tab));button.tabIndex = name === tab ? 0 : -1;
@@ -194,6 +199,37 @@
     syncRoute();
     if (state.cursor === scene.sse.length) stopPlayback();
     if (!scene.httpError) renderPlayback();
+  }
+
+  // 过程播放独立计时，切换标签或浏览历史时暂停。
+  function renderJourney() {
+    const focused=document.activeElement?.id === 'journey-progress';
+    document.getElementById('pane-journey').innerHTML=J.render(scene,state.journeyStage,state.journeyTool,state.jcursor,state.jplaying);
+    if (focused) document.getElementById('journey-progress').focus({preventScroll:true});
+  }
+
+  // 过程步包括一次 SSE 引发的多个内容事件和最后的会话提交。
+  function setJourneyCursor(value) {
+    state.jcursor=Math.max(0,Math.min(J.timeline(scene,state.journeyTool).length-1,Math.trunc(Number(value)) || 0));
+    if (state.jcursor===J.timeline(scene,state.journeyTool).length-1) stopJourney();
+    syncRoute();renderJourney();
+  }
+
+  // 结束或离开过程视图后，不让后台计时器继续推进路由。
+  function stopJourney() {
+    if (state.jtimer) clearInterval(state.jtimer);
+    state.jtimer=null;state.jplaying=false;
+    const button=document.querySelector('[data-action="journey-play"]');
+    if (button) {button.textContent='播放';button.setAttribute('aria-label','播放完整过程');}
+  }
+
+  // 自动播放仅替换当前历史，避免产生大量后退记录。
+  function toggleJourney() {
+    if (state.jplaying) {stopJourney();return;}
+    if (state.jcursor===J.timeline(scene,state.journeyTool).length-1) setJourneyCursor(0);
+    state.jplaying=true;
+    state.jtimer=setInterval(()=>setJourneyCursor(state.jcursor+1),state.interval);
+    renderJourney();
   }
 
   function stopPlayback() {
@@ -254,11 +290,16 @@
     if (!button) return;
     if (button.dataset.tab) {selectTab(button.dataset.tab);return;}
     const action = button.dataset.action;
+    if (['journey-reset','journey-prev','journey-next','journey-play'].includes(action)) {
+      if (action === 'journey-play') toggleJourney();
+      else {stopJourney();setJourneyCursor(action === 'journey-reset' ? 0 : state.jcursor+(action === 'journey-next' ? 1 : -1));}
+      return;
+    }
     if (action === 'journey-stage' || action === 'journey-tool') {
       if (action === 'journey-stage') state.journeyStage = button.dataset.stage;
       else state.journeyTool = button.dataset.tool;
       syncRoute('push');
-      document.getElementById('pane-journey').innerHTML = J.render(scene,state.journeyStage,state.journeyTool);
+      stopJourney();renderJourney();
       // 重绘后恢复到相同的阶段或调用按钮，保持键盘操作连续。
       const selected = [...document.querySelectorAll(`#pane-journey [data-action="${action}"]`)].find(item => action === 'journey-stage' ? item.dataset.stage === state.journeyStage : item.dataset.tool === state.journeyTool);
       selected?.focus({preventScroll:true});
@@ -280,7 +321,7 @@
     }
   });
   document.getElementById('scenario-search').addEventListener('input',event => {state.search = event.target.value;renderNav();});
-  app.addEventListener('input',event => {if (event.target.id === 'event-progress') {stopPlayback();setCursor(event.target.value);}});
+  app.addEventListener('input',event => {if (event.target.id === 'journey-progress') {stopJourney();setJourneyCursor(event.target.value);return;}if (event.target.id === 'event-progress') {stopPlayback();setCursor(event.target.value);}});
   app.addEventListener('change',event => {if (event.target.id === 'playback-speed') {const playing = state.playing;stopPlayback();state.interval = Number(event.target.value);if (playing) togglePlayback();}});
   document.addEventListener('keydown',event => {
     const tab = event.target.closest('[role="tab"]');
@@ -292,20 +333,21 @@
   });
   // 浏览器前进后退恢复界面；不继续自动播放，也不产生额外历史。
   window.addEventListener('popstate',() => {
-    stopPlayback();
+    stopPlayback();stopJourney();
     const route = new URLSearchParams(location.search);
     state.cursor = route.has('step') ? Math.max(0,Math.min(scene.sse.length,Math.trunc(Number(route.get('step'))) || 0)) : scene.sse.length;
     state.tab = ['replay','journey','compare','result'].includes(route.get('tab')) ? route.get('tab') : 'replay';
     state.journeyStage = J.stages.some(stage => stage.id === route.get('stage')) ? route.get('stage') : 'eventlog';
     state.journeyTool = route.get('call');
+    state.jcursor=route.has('jstep') ? Math.max(0,Math.min(J.timeline(scene,state.journeyTool).length-1,Math.trunc(Number(route.get('jstep'))) || 0)) : J.position(scene,state.journeyTool,state.cursor);
     state.snapshotMode = ['json','visual','diff'].includes(route.get('view')) ? route.get('view') : 'diff';
     state.resultMode = route.get('result_view') === 'diff' ? 'diff' : 'json';
     state.sourceMode = route.get('source') === 'frame' ? 'frame' : 'json';
-    document.getElementById('pane-journey').innerHTML = J.render(scene,state.journeyStage,state.journeyTool);
+    document.getElementById('pane-journey').innerHTML = J.render(scene,state.journeyStage,state.journeyTool,state.jcursor,state.jplaying);
     selectTab(state.tab,'none');
     document.querySelectorAll('a[data-scene]').forEach(link => {link.href = href(link.dataset.scene,true);});
     if (!scene.httpError) renderPlayback();
   });
-  window.addEventListener('pagehide',stopPlayback);
+  window.addEventListener('pagehide',()=>{stopPlayback();stopJourney();});
   renderNav();renderScene();
 })();

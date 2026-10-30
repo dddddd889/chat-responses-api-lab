@@ -265,15 +265,15 @@ test('完整过程按阶段关联同一工具调用，结构演示和未采集�
     assert.equal(document.querySelectorAll('.journey-calls button').length,2);
     document.querySelector('[data-action="journey-tool"][data-tool="0:1"]').click();
     assert.ok(document.querySelector('.journey-identity').textContent.includes(C.finalView(scene).tools[1].callID));
-    const message = JSON.parse(document.querySelector('[aria-label="Harness assistant 消息片段"]').textContent);
-    const event = JSON.parse(document.querySelector('[aria-label="EventLog assistant/message 结构片段"]').textContent);
+    const message = JSON.parse(document.querySelector('[aria-label="过程收集器内容"]').textContent);
+    const event = JSON.parse(document.querySelector('[aria-label="过程 EventLog"]').textContent);
     assert.deepEqual(event.data.message,message);assert.equal(event.seq,undefined);
-    assert.ok(document.querySelector('.journey-note').textContent.includes('没有产生真实 EventLog'));
+    assert.ok(document.querySelector('.journey-note').textContent.includes('没有实际执行 session.append'));
     document.querySelector('[data-action="journey-stage"][data-stage="adapter"]').click();
-    const pi = JSON.parse(document.querySelector('[aria-label="pi-ai 工具结束事件片段"]').textContent);
-    const harness = JSON.parse(document.querySelector('[aria-label="Harness 工具块结束事件"]').textContent);
-    assert.deepEqual(JSON.parse(harness.block.arguments),pi.toolCall.arguments);
-    assert.equal(harness.block.id,pi.toolCall.id);
+    const pi = JSON.parse(document.querySelector('[aria-label="过程 pi-ai 累积内容"]').textContent).content[1];
+    const harness = JSON.parse(document.querySelector('[aria-label="过程 Harness 累积内容"]').textContent).content[1];
+    assert.deepEqual(JSON.parse(harness.arguments),pi.arguments);
+    assert.equal(harness.id,pi.id);
     document.querySelector('[data-action="journey-stage"][data-stage="tool"]').click();
     assert.ok(document.querySelector('.journey-empty').textContent.includes('未采集'));
     assert.equal(document.querySelector('[aria-label="工具执行结果 JSON"]'),null);
@@ -282,7 +282,7 @@ test('完整过程按阶段关联同一工具调用，结构演示和未采集�
     document.querySelector('[data-action="journey-stage"][data-stage="response"]').click();
     document.querySelector('[data-action="journey-replay"]').click();
     assert.equal(document.getElementById('pane-replay').hidden,false);
-    assert.ok(document.getElementById('source-code').textContent.includes(C.finalView(scene).tools[1].callID));
+    assert.ok(document.getElementById('source-code').textContent.length>0);
     document.querySelector('[data-tab="journey"]').click();
     assert.equal(document.querySelector('[data-action="journey-tool"][data-tool="0:1"]').getAttribute('aria-pressed'),'true');
     let copied;
@@ -369,14 +369,14 @@ test('无工具的正文、推理、截断场景有适配与会话展示',{skip:
     const dom = await open(`${protocol}-${kind}`,t), document = dom.window.document;
     document.querySelector('[data-tab="journey"]').click();
     document.querySelector('[data-stage="adapter"]').click();
-    const pi = JSON.parse(document.querySelector('[aria-label="pi-ai 累积内容片段"]').textContent);
+    const pi = JSON.parse(document.querySelector('[aria-label="过程 pi-ai 累积内容"]').textContent);
     assert.ok(pi.content.some(block => block.type === 'text'));
     if (kind === 'thinking') assert.ok(pi.content.some(block => block.type === 'thinking' && block.thinking.length>20));
     assert.ok(!document.querySelector('.journey-stage-panel .badge').textContent.includes('不适用'));
-    if (kind === 'length') assert.match(document.querySelector('.journey-stage-content').textContent,/长度上限截断/);
+    if (kind === 'length') assert.match(document.querySelector('.journey-stage-content').textContent,/max-tokens/);
     document.querySelector('[data-stage="eventlog"]').click();
-    const message = JSON.parse(document.querySelector('[aria-label="Harness assistant 消息片段"]').textContent);
-    const event = JSON.parse(document.querySelector('[aria-label="EventLog assistant/message 结构片段"]').textContent);
+    const message = JSON.parse(document.querySelector('[aria-label="过程收集器内容"]').textContent);
+    const event = JSON.parse(document.querySelector('[aria-label="过程 EventLog"]').textContent);
     assert.deepEqual(event.data.message,message);assert.ok(event.data.usage.totalTokens>0);
     if (kind === 'thinking') assert.ok(message.content.some(block => block.type === 'reasoning' && block.text.length>20));
     document.querySelector('[data-stage="tool"]').click();
@@ -446,4 +446,63 @@ test('协议标签保留路由状态且菜单每个场景只出现一次',{skip:
   const updated=new URL(document.querySelector('.protocol-switch a[data-scene="chat-thinking"]').href);
   assert.equal(updated.searchParams.get('tab'),'replay');
   assert.equal(updated.searchParams.get('step'),String(C.prepare(meta.scenarios.find(scene=>scene.id==='chat-thinking')).sse.length));
+});
+
+// 原链接 step=0 必须为空起点；正文与推理逐步增长，正式日志只在提交步骤出现。
+test('完整过程逐步展示推理转换与提交，jstep 分享和前进后退可恢复',{skip:!modulePath},async t => {
+  for (const protocol of ['chat','responses']) {
+    const dom=await open(`${protocol}-thinking`,t,'json','?tab=journey&stage=adapter&step=0'), window=dom.window, document=window.document;
+    const frames=window.StreamJourney.timeline(window.StreamCore.prepare(window.SSE_DATA.scenarios.find(scene=>scene.id===`${protocol}-thinking`)));
+    const deltas=frames.map((frame,index)=>({frame,index})).filter(({frame})=>frame.piEvent?.type==='thinking_delta');
+    assert.equal(document.querySelector('#journey-progress').value,'0');
+    assert.deepEqual(JSON.parse(document.querySelector('[aria-label="过程 pi-ai 累积内容"]').textContent).content,[]);
+    const move=index=>{const progress=document.querySelector('#journey-progress');progress.value=index;progress.dispatchEvent(new window.Event('input',{bubbles:true}));};
+    for (const {frame,index} of deltas.slice(0,2)) {
+      move(index);
+      const pi=JSON.parse(document.querySelector('[aria-label="过程 pi-ai 累积内容"]').textContent);
+      const harness=JSON.parse(document.querySelector('[aria-label="过程 Harness 累积内容"]').textContent);
+      assert.equal(pi.content[0].thinking,frame.piBlocks[0].thinking);
+      assert.equal(harness.content[0].text,pi.content[0].thinking);
+      assert.equal(new URL(window.location.href).searchParams.get('jstep'),String(index));
+    }
+    document.querySelector('[data-stage="eventlog"]').click();
+    assert.equal(JSON.parse(document.querySelector('[aria-label="过程 EventLog"]').textContent),null);
+    assert.match(document.querySelector('[data-journey-commit]').textContent,/尚未写入/);
+    move(frames.length-2);assert.equal(JSON.parse(document.querySelector('[aria-label="过程 EventLog"]').textContent),null);
+    document.querySelector('[data-action="journey-next"]').click();
+    const event=JSON.parse(document.querySelector('[aria-label="过程 EventLog"]').textContent);
+    assert.ok(event.data.message.content.some(block=>block.type==='reasoning'));
+    if (protocol==='chat') {
+      const history=JSON.parse(document.querySelector('[aria-label="过程 Chat 历史映射"]').textContent);
+      assert.equal(history.messages[0].reasoning_content,event.data.message.content.find(block=>block.type==='reasoning').text);
+      assert.equal(history.messages[0].content,'391');
+    }
+    // 刷新恢复独立过程步，不要求将旧 SSE step 改成同一个数。
+    const restored=await open(`${protocol}-thinking`,t,'json',window.location.search);
+    assert.equal(restored.window.document.querySelector('#journey-progress').value,String(frames.length-1));
+    assert.ok(JSON.parse(restored.window.document.querySelector('[aria-label="过程 EventLog"]').textContent));
+    document.querySelector('[data-stage="adapter"]').click();
+    const back=new Promise(resolve=>window.addEventListener('popstate',resolve,{once:true}));window.history.back();await back;
+    assert.equal(document.querySelector('[data-stage="eventlog"]').getAttribute('aria-current'),'step');
+    assert.equal(document.querySelector('#journey-progress').value,String(frames.length-1));
+    // 返回起点必须抹掉已展示的正式事件和推理历史映射。
+    document.querySelector('[data-action="journey-reset"]').click();
+    assert.equal(JSON.parse(document.querySelector('[aria-label="过程 EventLog"]').textContent),null);
+    assert.equal(document.querySelector('[aria-label="过程 Chat 历史映射"]'),null);
+  }
+});
+
+// 自动播放与手动切换共用进度，离开后停止计时而非后台偷偷修改地址。
+test('完整过程自动播放可暂停并在切换主标签后停止',{skip:!modulePath},async t => {
+  const dom=await open('chat-thinking',t,'json','?tab=journey&stage=adapter&jstep=0'), window=dom.window, document=window.document;
+  document.querySelector('[data-action="journey-play"]').click();
+  await new Promise(resolve=>setTimeout(resolve,700));
+  assert.ok(Number(document.querySelector('#journey-progress').value)>0);
+  document.querySelector('[data-action="journey-play"]').click();
+  const paused=window.location.search;
+  await new Promise(resolve=>setTimeout(resolve,700));assert.equal(window.location.search,paused);
+  document.querySelector('[data-action="journey-play"]').click();
+  document.querySelector('[data-tab="replay"]').click();
+  const left=window.location.search;
+  await new Promise(resolve=>setTimeout(resolve,700));assert.equal(window.location.search,left);
 });

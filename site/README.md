@@ -4,7 +4,7 @@
 
 ## 打开
 
-直接双击 `dist/index.html`。数据以普通脚本加载，没有 fetch、外部字体或 CDN，断网也可以使用。每个场景有独立页面，例如：
+在仓库根目录运行 `python3 -m http.server 8766 --directory site/dist`，打开 `http://localhost:8766/`。数据以普通脚本加载，没有 fetch、外部字体或 CDN，启动本地服务器后断网也可以使用。路由依赖浏览器 History API，请通过 HTTP 地址访问。每个场景有独立页面，例如：
 
 - `dist/scenarios/chat-multi_tool/index.html`
 - `dist/scenarios/responses-multi_tool/index.html`
@@ -70,10 +70,12 @@ Chat 的 `reasoning_content` 是提供方扩展字段，逐条追加；Responses
 
 用量来源：回放两栏的 usage 仅来自当前进度已经收到的上游事件，未收到时保持 null。右栏标出用量来源的 SSE 序号。顶部概览、字段说明和“完整结果”标签页明确标为日志终点数据，不随回放变化。
 
-完整过程同时展示正文、推理和工具块：pi-ai 累积内容与结束事件 → Harness block-end → assistant 消息 → EventLog 事件片段。无工具时仅执行工具阶段不适用，下一次请求仍标未采集。长度上限保留已生成内容并标注 max-tokens；HTTP 错误不生成 assistant 消息。usage 单独放在 EventLog data.usage，按 pi-ai 扣除缓存后的 input 映射。未采集的消息 ID、签名、seq/time、turn/step、stream 不伪造。此页读取整次记录终点，独立于回放 step。
+完整过程同时展示正文、推理和工具块：pi-ai start/delta/end → Harness chunks → 内容累积 → EventLog 事件片段。无工具时仅执行工具阶段不适用，下一次请求仍标未采集。长度上限保留已生成内容并标注 max-tokens；HTTP 错误不生成 assistant 消息。usage 单独放在 EventLog data.usage，按 pi-ai 扣除缓存后的 input 映射。未采集的消息 ID、签名、seq/time、turn/step、stream 不伪造。
+
+独立过程进度 `jstep` 每步保留当时的累积值；一次 SSE 可引发多个映射步骤。终止检查后才单独展示 session.append，提交前 EventLog 为 null。旧链接没有 jstep 时按 step 定位，step=0 对应空起点。Chat 提交后另展示 reasoning → thinking → reasoning_content 的同源历史字段映射，不冒充已发送请求。当前只采集一次模型请求，不是包含工具闭环的完整 turn。
 
 参考 pi-ai 1.1.0 的 openai-completions/openai-responses-shared，以及 Harness 固定提交的 stream.ts、assembler.ts、agent.ts。离线加载真实适配器因本地缺少 @deepseek-ai/dsh-brand 工作区依赖未成功；验证限于源码核对、真实样本投影和观察室交互测试，没有捕获实际 Harness EventLog。
 
 左侧只列 7 种场景，右上角保留 Chat / Responses 协议标签。协议写入 URL 路径，切换时保留主标签、阶段和展示模式；进度限制在目标样本范围内，无效的工具选择清除。移除首屏五张统计卡片，HTTP 状态使用紧凑标记；事件总数、Token 字段说明与回放用量仍保留在对应区域。
 
-路由状态：URL 查询参数 `tab` 保存主标签，`step` 保存回放 SSE 序号，`stage` 保存过程阶段，`call` 保存选中工具，`view/result_view/source` 保存展示模式。交互实时更新地址；刷新、分享和前进后退恢复状态。标签、阶段与工具切换新增历史；连续进度变化替换当前历史，恢复历史时暂停播放。
+路由状态：URL 查询参数 `tab` 保存主标签，`step` 保存回放 SSE 序号，`jstep` 保存完整过程映射步骤，`stage` 保存过程阶段，`call` 保存选中工具，`view/result_view/source` 保存展示模式。交互实时更新地址；刷新、分享和前进后退恢复状态。标签、阶段与工具切换新增历史；连续进度变化替换当前历史，恢复历史时暂停播放。

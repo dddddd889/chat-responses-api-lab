@@ -180,6 +180,7 @@ test('差异比较忽略对象属性顺序，并转义模型文本与字段路�
 
 // 结构演示使用真实调用 ID；绝不生成声称已写入的序号、执行结果或下一轮请求。
 const journeyContext = {window:{StreamCore:C}};
+vm.runInNewContext(fs.readFileSync(path.join(__dirname,'web/journey-replay.js'),'utf8'),journeyContext);
 vm.runInNewContext(fs.readFileSync(path.join(__dirname,'web/journey.js'),'utf8'),journeyContext);
 const J = journeyContext.window.StreamJourney;
 test('完整过程投影保留关联 ID 与工具参数，消息原样包入 EventLog 片段',() => {
@@ -309,4 +310,43 @@ test('正文推理和截断内容完整进入 Harness 消息与 EventLog 投影'
   const tool=J.prepare(scenes.find(scene=>scene.id==='chat-multi_tool'));
   assert.equal(tool.piUsage.input,172);assert.equal(tool.usage.inputTokens,172);
   assert.equal(tool.usage.cacheReadTokens,128);assert.equal(tool.usage.totalTokens,358);
+});
+
+// 真样本每个推理 delta 都对应一次映射，提交仅出现在最后，退回前一步即不存在。
+test('过程回放按真实推理增量累积，结束后才产生 EventLog',() => {
+  for (const protocol of ['chat','responses']) {
+    const scene=scenes.find(scene=>scene.id===`${protocol}-thinking`), before=JSON.stringify(scene);
+    const frames=J.timeline(scene);
+    assert.deepEqual(plain(frames[0].piBlocks),[]);assert.equal(frames[0].event,null);
+    let expected='';
+    for (const frame of frames) {
+      if (frame.piEvent?.type==='thinking_delta') {
+        expected+=frame.piEvent.delta;
+        assert.equal(frame.piBlocks.filter(block=>block.type==='thinking').map(block=>block.thinking).join(''),expected);
+        assert.equal(frame.harnessBlocks.filter(block=>block.type==='reasoning').map(block=>block.text).join(''),expected);
+        assert.equal(frame.chunks[0].type,'reasoning-delta');
+        assert.equal(frame.event,null);assert.equal(frame.usage,null);
+      }
+    }
+    assert.ok(expected.length>30);
+    assert.equal(frames.filter(frame=>frame.event).length,1);
+    assert.equal(frames.at(-2).event,null);
+    assert.deepEqual(plain(frames.at(-1).event.data.message),plain(J.prepare(scene).message));
+    assert.equal(frames.at(-1).event.data.usage.totalTokens,scene.result.object.usage.total_tokens);
+    assert.equal(JSON.stringify(scene),before);
+  }
+});
+
+// 普通正文、工具、长度截断可结束；HTTP 错误和缺少终止事件不能假装已提交。
+test('过程终点覆盖正文工具截断并拒绝缺少终止的正式提交',() => {
+  for (const scene of scenes.filter(scene=>!scene.httpError)) {
+    const frames=J.timeline(scene), last=frames.at(-1);
+    assert.deepEqual(plain(last.event.data.message),plain(J.prepare(scene).message),scene.id);
+    assert.equal(last.event.data.usage.totalTokens,scene.result.object.usage.total_tokens);
+    if (scene.kind==='length') assert.equal(last.finish,'max-tokens');
+  }
+  for (const scene of scenes.filter(scene=>scene.httpError)) assert.ok(J.timeline(scene).every(frame=>!frame.event));
+  const scene=JSON.parse(JSON.stringify(scenes.find(scene=>scene.id==='chat-thinking')));
+  scene.sse=scene.sse.filter(record=>record.data!=='[DONE]');
+  assert.ok(J.timeline(scene).every(frame=>!frame.event));
 });

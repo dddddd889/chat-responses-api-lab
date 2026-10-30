@@ -33,7 +33,7 @@ def build():
         scenarios.append({'id': entry['name'], 'protocol': entry['protocol'], 'kind': kind, 'title': title, 'description': description, 'number': number, 'httpStatus': entry['http_status'], 'tokens': entry.get('total_tokens', 0), 'sourceText': text, 'sourceSHA256': hashlib.sha256(path.read_bytes()).hexdigest()})
     DIST.mkdir(exist_ok=True)
     (DIST / ".nojekyll").touch() # GitHub Pages 直接提供静态文件，不经过 Jekyll。
-    for name in ['styles.css', 'core.js', 'usage.js', 'snapshot.js', 'journey.js', 'app.js', 'favicon.svg']:
+    for name in ['styles.css', 'core.js', 'usage.js', 'snapshot.js', 'journey-replay.js', 'journey.js', 'app.js', 'favicon.svg']:
         shutil.copyfile(SITE / 'web' / name, DIST / name)
     payload = {'model': 'deepseek-flash', 'date': '2026-10-30', 'totalTokens': sum(item['tokens'] for item in scenarios), 'source': str(SOURCE.relative_to(SITE.parent)), 'scenarios': scenarios}
     encoded = json.dumps(payload, ensure_ascii=False, separators=(',', ':')).replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026').replace('\u2028', '\\u2028').replace('\u2029', '\\u2029')
