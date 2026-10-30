@@ -3,7 +3,6 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const fs = require('node:fs');
-const {fileURLToPath} = require('node:url');
 const vm = require('node:vm');
 const modulePath = process.env.SSE_DOM_MODULE;
 const root = path.join(__dirname,'dist');
@@ -13,18 +12,20 @@ const meta = JSON.parse(JSON.stringify(sandbox.window.SSE_DATA));
 const C = require('./web/core.js');
 
 // 本地资源加载器拒绝网络访问，确保交互不会偷偷请求 API。
-async function open(id,t,view='json') {
+async function open(id,t,view='json',query='') {
   const {JSDOM,VirtualConsole,ResourceLoader} = require(modulePath);
   const errors = [];
   const console = new VirtualConsole();console.on('jsdomError',error => errors.push(error));
   class LocalOnly extends ResourceLoader {
     fetch(url,options) {
-      assert.ok(url.startsWith('file:'),'unexpected network: '+url);
-      assert.ok(fileURLToPath(url).startsWith(root+path.sep),'unexpected file: '+url);
-      return super.fetch(url,options);
+      const resource = new URL(url);
+      assert.equal(resource.origin,'https://sse.test','unexpected network: '+url);
+      const local = path.resolve(root,'.'+decodeURIComponent(resource.pathname));
+      assert.ok(local.startsWith(root+path.sep),'unexpected file: '+url);
+      return Promise.resolve(fs.readFileSync(local));
     }
   }
-  const dom = await JSDOM.fromFile(path.join(root,'scenarios',id,'index.html'),{runScripts:'dangerously',resources:new LocalOnly(),virtualConsole:console,pretendToBeVisual:true});
+  const dom = await JSDOM.fromFile(path.join(root,'scenarios',id,'index.html'),{url:`https://sse.test/scenarios/${id}/index.html${query}`,runScripts:'dangerously',resources:new LocalOnly(),virtualConsole:console,pretendToBeVisual:true});
   t.after(() => dom.window.close());
   await new Promise((resolve,reject) => {
     if (dom.window.document.readyState === 'complete') return resolve();
@@ -374,4 +375,44 @@ test('无工具场景完整过程明确标注不适用而非空转换',{skip:!mo
     assert.ok(!pane.textContent.includes('undefined'));
     if (stage !== 'response') assert.match(pane.querySelector('.journey-stage-panel .badge').textContent,/不适用/);
   }
+});
+
+// 覆盖地址实时同步、深链接恢复、前进后退以及连续回放不刷屏历史。
+test('标签、阶段、工具和回放进度写入路由并可恢复',{skip:!modulePath},async t => {
+  const dom = await open('responses-multi_tool',t), {document,history} = dom.window;
+  const route = () => new URL(dom.window.location.href).searchParams;
+  const progress = document.querySelector('#event-progress');
+  const originalLength = history.length;
+  for (const step of [2,3,4]) {
+    progress.value=step;progress.dispatchEvent(new dom.window.Event('input',{bubbles:true}));
+    assert.equal(route().get('step'),String(step));
+  }
+  assert.equal(history.length,originalLength);
+  document.querySelector('[data-tab="journey"]').click();
+  assert.equal(route().get('tab'),'journey');
+  document.querySelector('[data-stage="adapter"]').click();
+  assert.equal(route().get('stage'),'adapter');
+  document.querySelector('[data-tool="0:1"]').click();
+  assert.equal(route().get('call'),'0:1');
+  const shared = dom.window.location.search;
+  // 新建页面模拟重新打开分享链接，恢复阶段、工具以及保留的回放进度。
+  const restored = await open('responses-multi_tool',t,'json',shared);
+  assert.equal(restored.window.document.querySelector('#tab-journey').getAttribute('aria-selected'),'true');
+  assert.equal(restored.window.document.querySelector('[data-stage="adapter"]').getAttribute('aria-current'),'step');
+  assert.equal(restored.window.document.querySelector('[data-tool="0:1"]').getAttribute('aria-pressed'),'true');
+  assert.equal(restored.window.document.querySelector('#event-progress').value,'4');
+  // 后退恢复工具选择之前的状态，前进再恢复选中的第二个工具。
+  const navigate = direction => new Promise(resolve => {dom.window.addEventListener('popstate',resolve,{once:true});history[direction]();});
+  await navigate('back');
+  assert.equal(route().get('call'),null);
+  assert.equal(document.querySelector('[data-tool="0:0"]').getAttribute('aria-pressed'),'true');
+  await navigate('forward');
+  assert.equal(document.querySelector('[data-tool="0:1"]').getAttribute('aria-pressed'),'true');
+  document.querySelector('[data-tab="replay"]').click();
+  assert.equal(route().get('tab'),'replay');
+  await navigate('back');
+  assert.equal(document.querySelector('#tab-journey').getAttribute('aria-selected'),'true');
+  await navigate('forward');
+  assert.equal(document.querySelector('#tab-replay').getAttribute('aria-selected'),'true');
+  assert.equal(document.querySelector('#event-progress').value,'4');
 });

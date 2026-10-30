@@ -2,7 +2,7 @@
   "pages": 15,
   "individual_scenarios": 14,
   "data_tests_passed": 30,
-  "dom_tests_passed": 28,
+  "dom_tests_passed": 29,
   "http_resources_checked": 22,
   "original_files_unchanged": 419,
   "old_markdown_files_unchanged": 3,
@@ -48,5 +48,7 @@
   "reasoning_reference": "pi-ai 1.1.0 source and Harness 687f282 adapter/assembler; no runtime requests",
   "usage_arrival_all_scenarios_checked": true,
   "usage_source_event_visible": true,
-  "no_tool_journey_scope_checked": true
+  "no_tool_journey_scope_checked": true,
+  "route_state_restore_checked": true,
+  "route_back_forward_checked": true
 }
