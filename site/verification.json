@@ -7,7 +7,7 @@
   "original_files_unchanged": 419,
   "old_markdown_files_unchanged": 3,
   "new_model_requests": 0,
-  "screen_qa": "upstream_horizontal_and_expanded_snapshot_checked",
+  "screen_qa": "upstream_horizontal_and_both_results_full_height_checked",
   "hosting": "github_pages",
   "cache_metrics": {
     "cached_tokens": 128,
@@ -35,5 +35,11 @@
   "upstream_layout": "list_left_inspector_right",
   "replay_layout": "upstream_above_results_pair",
   "snapshot_full_height": true,
-  "layout_targeted_tests_passed": 3
+  "layout_targeted_tests_passed": 3,
+  "final_result_full_height": true,
+  "final_result_height_verified": {
+    "replay": 895,
+    "result_tab": 909,
+    "internal_vertical_scroll": false
+  }
 }

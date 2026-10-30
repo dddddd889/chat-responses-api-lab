@@ -4,8 +4,8 @@
 
 /* 上游内部左右分栏；下方两块结果并排，给完整累积对象更多宽度。 */
 @media(min-width:761px){.workbench{grid-template-columns:repeat(2,minmax(0,1fr))}.sse-panel{grid-column:1/-1}.upstream-body{display:grid;grid-template-columns:minmax(260px,1fr) minmax(0,2fr);height:clamp(300px,48vh,480px)}.sse-panel .event-list{height:auto;min-height:0;border-right:1px solid var(--border)}.sse-panel .inspector{display:flex;flex-direction:column;min-height:0;border-top:0}.sse-panel .inspector-head{flex-shrink:0}.sse-panel .inspector .code{flex:1;min-height:0;height:auto;max-height:none}}
-/* 当前状态不再限制代码框高度，长 JSON 和 diff 都随页面自然展开。 */
-#snapshot-body .code{max-height:none;height:auto;overflow:visible;font-size:11px}
+/* 累积状态和完整结果均不限制代码框高度，长 JSON 与 diff 随页面自然展开。 */
+#snapshot-body .code,#final-result-body .code,#pane-result .result-code .code{max-height:none;height:auto;overflow:visible;font-size:11px}
 #snapshot-body .arguments,#snapshot-body .text-output{max-height:none;height:auto}
 
 .final-result-body{padding:13px 14px}.final-result-code{background:#111e2b;border-radius:7px}.final-result-code .code{padding:12px;max-height:570px;font-size:10px}
