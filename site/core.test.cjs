@@ -202,9 +202,9 @@ test('完整过程投影保留关联 ID 与工具参数，消息原样包入 Eve
   }
 });
 
-test('缺少工具、截断或非法参数时不制造可执行的 Harness 消息',() => {
+test('正文可转换，非法工具参数或非正常中断不制造正式消息',() => {
   const text = scenes.find(item => item.id==='chat-text');
-  assert.ok(J.prepare(text).blocked);
+  assert.equal(J.prepare(text).blocked,null);assert.equal(J.prepare(text).message.content[0].type,'text');
   const scene = JSON.parse(JSON.stringify(scenes.find(item => item.id==='chat-tool')));
   scene.result.object.choices[0].tool_calls[0].function.arguments = '{';
   const invalid = J.prepare(scene);
@@ -289,4 +289,24 @@ test('所有场景 usage 仅在上游用量事件到达后出现', () => {
       else assert.equal(current.usage,null);
     }
   }
+});
+
+// 以原始 SSE 与日志为独立预期，覆盖正文、推理、截断和事件用量字段位置。
+test('正文推理和截断内容完整进入 Harness 消息与 EventLog 投影',() => {
+  for (const protocol of ['chat','responses']) for (const kind of ['text','json','thinking','length']) {
+    const scene = scenes.find(scene => scene.id === `${protocol}-${kind}`), before=JSON.stringify(scene);
+    const data = J.prepare(scene), snapshot = C.snapshot(scene,scene.sse.length);
+    assert.equal(data.blocked,null,scene.id);
+    assert.equal(data.message.content.filter(block => block.type==='text').map(block => block.text).join(''),C.finalView(scene).text);
+    assert.equal(data.message.content.filter(block => block.type==='reasoning').map(block => block.text).join(''),snapshot.reasoning);
+    assert.deepEqual(plain(data.event.data.message),plain(data.message));
+    assert.equal(data.event.data.usage.totalTokens,scene.result.object.usage.total_tokens);
+    assert.equal(data.message.usage,undefined);
+    assert.equal(data.event.seq,undefined);assert.equal(data.message.id,undefined);
+    assert.equal(data.lengthLimited,kind==='length');
+    assert.equal(JSON.stringify(scene),before);
+  }
+  const tool=J.prepare(scenes.find(scene=>scene.id==='chat-multi_tool'));
+  assert.equal(tool.piUsage.input,172);assert.equal(tool.usage.inputTokens,172);
+  assert.equal(tool.usage.cacheReadTokens,128);assert.equal(tool.usage.totalTokens,358);
 });

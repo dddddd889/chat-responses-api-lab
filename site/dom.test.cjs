@@ -363,17 +363,26 @@ test('usage 来源明确，两栏在用量事件前为 null，事件到达后同
   }
 });
 
-// 无工具、长度截断场景不应伪装成已有工具转换或会话写入记录。
-test('无工具场景完整过程明确标注不适用而非空转换',{skip:!modulePath},async t => {
-  const dom = await open('responses-length',t), document = dom.window.document;
-  document.querySelector('[data-tab="journey"]').click();
-  for (const stage of ['response','adapter','eventlog','tool','request']) {
-    document.querySelector(`[data-action="journey-stage"][data-stage="${stage}"]`).click();
-    const pane = document.querySelector('#pane-journey');
-    assert.match(pane.textContent,/不适用：本场景没有工具调用/);
-    assert.match(pane.textContent,/尚未实现展示/);
-    assert.ok(!pane.textContent.includes('undefined'));
-    if (stage !== 'response') assert.match(pane.querySelector('.journey-stage-panel .badge').textContent,/不适用/);
+// 普通回复、思考和长度截断都有内容转换与会话消息；仅工具执行不适用。
+test('无工具的正文、推理、截断场景有适配与会话展示',{skip:!modulePath},async t => {
+  for (const protocol of ['chat','responses']) for (const kind of ['text','thinking','length']) {
+    const dom = await open(`${protocol}-${kind}`,t), document = dom.window.document;
+    document.querySelector('[data-tab="journey"]').click();
+    document.querySelector('[data-stage="adapter"]').click();
+    const pi = JSON.parse(document.querySelector('[aria-label="pi-ai 累积内容片段"]').textContent);
+    assert.ok(pi.content.some(block => block.type === 'text'));
+    if (kind === 'thinking') assert.ok(pi.content.some(block => block.type === 'thinking' && block.thinking.length>20));
+    assert.ok(!document.querySelector('.journey-stage-panel .badge').textContent.includes('不适用'));
+    if (kind === 'length') assert.match(document.querySelector('.journey-stage-content').textContent,/长度上限截断/);
+    document.querySelector('[data-stage="eventlog"]').click();
+    const message = JSON.parse(document.querySelector('[aria-label="Harness assistant 消息片段"]').textContent);
+    const event = JSON.parse(document.querySelector('[aria-label="EventLog assistant/message 结构片段"]').textContent);
+    assert.deepEqual(event.data.message,message);assert.ok(event.data.usage.totalTokens>0);
+    if (kind === 'thinking') assert.ok(message.content.some(block => block.type === 'reasoning' && block.text.length>20));
+    document.querySelector('[data-stage="tool"]').click();
+    assert.match(document.querySelector('.journey-stage-content').textContent,/不适用：本场景没有工具调用/);
+    document.querySelector('[data-stage="request"]').click();
+    assert.equal(document.querySelector('.journey-stage-panel .badge').textContent,'未采集');
   }
 });
 
