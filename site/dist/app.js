@@ -14,7 +14,7 @@
   const counterpart = scenes.find(item => item.kind === scene.kind && item.protocol !== scene.protocol);
   const params = new URLSearchParams(location.search);
   const app = document.getElementById('app');
-  const state = {cursor:params.has('step') ? Math.max(0,Math.min(scene.sse.length,Number(params.get('step')) || 0)) : scene.sse.length, tab:['replay','compare','result'].includes(params.get('tab')) ? params.get('tab') : 'replay', filter:'all', search:'', selectedBusiness:null, sourceMode:'json', snapshotMode:params.get('view') === 'visual' ? 'visual' : 'json', playing:false, interval:650, timer:null};
+  const state = {cursor:params.has('step') ? Math.max(0,Math.min(scene.sse.length,Number(params.get('step')) || 0)) : scene.sse.length, tab:['replay','compare','result'].includes(params.get('tab')) ? params.get('tab') : 'replay', filter:'all', search:'', sourceMode:'json', snapshotMode:params.get('view') === 'visual' ? 'visual' : 'json', playing:false, interval:650, timer:null};
   let toastTimer;
   const icon = (name,size=15) => {
     const paths = {play:'<path d="m8 5 11 7-11 7Z"/>',pause:'<path d="M8 5v14M16 5v14"/>',back:'<path d="M6 5v14m12-14L8 12l10 7Z"/>',prev:'<path d="m15 5-7 7 7 7"/>',next:'<path d="m9 5 7 7-7 7"/>',code:'<path d="m8 6-6 6 6 6m8-12 6 6-6 6m-5 2 2-16"/>',flow:'<rect x="3" y="4" width="6" height="5" rx="1"/><rect x="15" y="15" width="6" height="5" rx="1"/><path d="M6 9v8h9m-1-4 4 4-4 4"/>',braces:'<path d="M9 3H7v6l-3 3 3 3v6h2m6-18h2v6l3 3-3 3v6h-2"/>',copy:'<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M15 8V3H3v12h5"/>',download:'<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',compare:'<path d="M12 3v18M4 7h4v10H4M16 7h4v10h-4"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/>',check:'<path d="m5 12 4 4L19 6"/>',link:'<path d="m10 13 4-4m-6 7-2 2a4 4 0 0 1-6-6l5-5a4 4 0 0 1 6 0m2 1 2-2a4 4 0 0 1 6 6l-5 5a4 4 0 0 1-6 0"/>'};
@@ -64,17 +64,17 @@
       </div>
       <section id="pane-replay" role="tabpanel" aria-labelledby="tab-replay">
         ${isError ? renderHTTP() : `
-        ${scene.kind === 'length' ? `<div class="notice"><strong>这次生成触发了长度上限。</strong> ${scene.protocol === 'chat' ? '收到了 finish_reason=length 与 [DONE]，传输完整，但正文被截断。' : '最后收到 response.incomplete，合并对象标记 partial，统一事件保留 error。'}</div>` : ''}
-        ${scene.kind === 'thinking' ? '<div class="notice">思考扩展完整保留在第一层。当前 Go 实现只把常见正文、拒绝与函数工具规范化；第三层不包含未建模的思考事件。</div>' : ''}
+        ${scene.kind === 'length' ? `<div class="notice"><strong>这次生成触发了长度上限。</strong> ${scene.protocol === 'chat' ? '收到了 finish_reason=length 与 [DONE]，传输完整，但正文被截断。' : '最后收到 response.incomplete，结果保留未完成状态和原因。'}</div>` : ''}
+        ${scene.kind === 'thinking' ? '<div class="notice">思考扩展完整保留在第一层。完整结果仅展示 Go 累积器已建模字段；其他思考扩展仍可在上游事件 JSON 中查看。</div>' : ''}
         <div class="playback-bar"><button class="control-btn" data-action="reset" aria-label="回到开头" title="回到开头">${icon('back')}</button><button class="control-btn" data-action="prev" aria-label="上一条 SSE" title="上一条 SSE">${icon('prev')}</button><button class="play-button" id="play-toggle" data-action="play" aria-label="播放回放">${icon('play')}</button><button class="control-btn" data-action="next" aria-label="下一条 SSE" title="下一条 SSE">${icon('next')}</button><div class="playback-slider"><input id="event-progress" type="range" min="0" max="${scene.sse.length}" value="${state.cursor}" aria-label="回放到第几条 SSE"><span class="playback-step" id="playback-step"></span></div><div class="playback-meta"><span class="keyboard-hint">逐条探索</span><span class="keycap">← →</span><select id="playback-speed" aria-label="回放速度"><option value="1200">慢速</option><option value="650" selected>正常</option><option value="250">快速</option></select></div></div>
         <div class="workbench">
-          <section class="panel"><div class="panel-head"><span class="layer-number">01</span><span class="panel-title">上游事件<small>SSE / JSON</small></span><span class="panel-count">${scene.sse.length}</span></div><div class="panel-description">每条完整 data 的原始 JSON。点击序号查看内容。</div><div class="event-list" id="sse-list"></div><div class="inspector"><div class="inspector-head"><span id="source-title">事件检查器</span><div><button data-action="source-mode" id="source-mode-button">查看 SSE 帧</button> <button data-action="copy" data-content="source" aria-label="复制当前上游事件">${icon('copy',11)}</button></div></div><pre class="code" id="source-code" tabindex="0" aria-label="上游事件 JSON"></pre></div></section>
-          <section class="panel"><div class="panel-head"><span class="layer-number two">02</span><span class="panel-title">拼接状态 · 累积对象<small>ACCUMULATED OBJECT</small></span><span class="panel-count" id="snapshot-count"></span><div class="panel-actions"><button data-action="snapshot-mode" aria-pressed="false">JSON</button><button data-action="copy" data-content="snapshot" aria-label="${V.copyLabel}">${icon('copy',11)}</button></div></div><div class="panel-description">直接按日志完整结果的字段布局累积；下方逐字段对照当前值和最终值。</div><div class="snapshot-body" id="snapshot-body"></div><div class="snapshot-foot">delta 按归属追加，done 全文替换。完整参数仍是 JSON 字符串，工具不会自动执行。</div></section>
-          <section class="panel business-panel"><div class="panel-head"><span class="layer-number three">03</span><span class="panel-title">统一业务事件<small>NORMALIZED EVENTS</small></span><span class="panel-count">${scene.business.length}</span></div><div class="panel-description">两种接口使用相同事件名称。点击可联动来源范围。</div><div class="business-list" id="business-list"></div></section>
+          <section class="panel"><div class="panel-head"><span class="layer-number">01</span><span class="panel-title">上游 SSE<small>FULL EVENT TYPE / JSON</small></span><span class="panel-count">${scene.sse.length}</span></div><div class="panel-description">显示完整事件类型与原始 data JSON。点击序号联动当前累积状态。</div><div class="event-list" id="sse-list"></div><div class="inspector"><div class="inspector-head"><span id="source-title">事件检查器</span><div><button data-action="source-mode" id="source-mode-button">查看 SSE 帧</button> <button data-action="copy" data-content="source" aria-label="复制当前上游事件">${icon('copy',11)}</button></div></div><pre class="code" id="source-code" tabindex="0" aria-label="上游事件 JSON"></pre></div></section>
+          <section class="panel"><div class="panel-head"><span class="layer-number two">02</span><span class="panel-title">拼接状态 · 累积对象<small>ACCUMULATED OBJECT</small></span><span class="panel-count" id="snapshot-count"></span><div class="panel-actions"><button data-action="snapshot-mode" aria-pressed="false">JSON</button><button data-action="copy" data-content="snapshot" aria-label="${V.copyLabel}">${icon('copy',11)}</button></div></div><div class="panel-description">随左侧 SSE 更新；与右侧完整结果使用相同字段布局，可逐字段对照。</div><div class="snapshot-body" id="snapshot-body"></div><div class="snapshot-foot">delta 按归属追加，done 全文替换。完整参数仍是 JSON 字符串，工具不会自动执行。</div></section>
+          <section class="panel final-result-panel"><div class="panel-head"><span class="layer-number three">03</span><span class="panel-title">完整结果<small>FINAL RESULT</small></span><div class="panel-actions"><button data-action="copy" data-content="result" aria-label="复制完整结果 JSON">${icon('copy',11)}</button></div></div><div class="panel-description">同一次请求保存的完整结果，作为固定参照，不随回放变化。</div><div class="final-result-body"><div class="snapshot-json-label">${scene.protocol === 'chat' ? '项目 Go ChatResult · choices/tool_calls 按编号保存为对象' : '项目 Go ResponseObject · 已建模字段'}</div><div class="final-result-code"><pre class="code" tabindex="0" aria-label="日志完整结果 JSON">${C.highlight(C.pretty(scene.result.object))}</pre></div></div></section>
         </div>
         <div class="workbench-caption"><span>${icon('link',12)} 序号是本地 event_index；上游 sequence_number 保留在 JSON 中。</span><span>回放速率为演示速度，不代表真实网络耗时。</span></div>
-        <section class="panel result-comparison"><div class="panel-head"><span class="panel-title">拼接状态 → 完整结果<small>FIELD COMPARISON</small></span></div><p class="panel-description">${scene.protocol === 'chat' ? '当前与最终对象都使用项目 Go ChatResult 结构；choices/tool_calls 按编号保存为对象，并非 OpenAI 原始响应数组。' : '当前与最终对象都使用项目 Go ResponseObject 已建模字段；上游完整 JSON 及扩展字段保留在事件检查器。'} 对照区始终展示同一次请求的日志结果。</p><div id="snapshot-comparison"></div><details open><summary class="panel-description">日志完整结果 · 不随回放变化</summary><pre class="code" tabindex="0" aria-label="日志完整结果 JSON">${C.highlight(C.pretty(scene.result?.object))}</pre></details></section>
-        <div class="flow-strip"><b>resp.Body</b><span class="arrow">→</span><span>SSE 解帧</span><span class="arrow">→</span><span>Chat / Responses 解码</span><span class="arrow">→</span><span>按 index 合并</span><span class="arrow">→</span><b>result + business events</b></div>`}
+        <section class="panel result-comparison"><div class="panel-head"><span class="panel-title">拼接状态 → 完整结果<small>FIELD COMPARISON</small></span></div><p class="panel-description">${scene.protocol === 'chat' ? '当前与最终对象都使用项目 Go ChatResult 结构；choices/tool_calls 按编号保存为对象，并非 OpenAI 原始响应数组。' : '当前与最终对象都使用项目 Go ResponseObject 已建模字段；上游完整 JSON 及扩展字段保留在事件检查器。'} 对照区始终展示同一次请求的日志结果。</p><div id="snapshot-comparison"></div></section>
+        <div class="flow-strip"><b>resp.Body</b><span class="arrow">→</span><span>SSE 解帧</span><span class="arrow">→</span><span>Chat / Responses 解码</span><span class="arrow">→</span><span>按 index 合并</span><span class="arrow">→</span><b>完整结果</b></div>`}
       </section>
       <section id="pane-compare" role="tabpanel" aria-labelledby="tab-compare" hidden>${renderCompare()}</section>
       <section id="pane-result" role="tabpanel" aria-labelledby="tab-result" hidden>${renderResult()}</section>
@@ -87,17 +87,20 @@
     return `<div class="stat"><span class="stat-icon">${icon(name,14)}</span><div class="stat-name">${label}</div><div class="stat-value ${color}">${value}</div><div class="stat-caption">${caption}</div></div>`;
   }
 
+  // Responses 使用完整 type；Chat 显示 SSE event，不将 JSON object 冒充事件类型。
+  function upstreamType(record) {
+    return record.object?.type || record.event || 'message';
+  }
+
   // 每次仅根据当前位置计算展示；usage 到达之前展示待接收状态。
   function renderPlayback() {
     const snapshot = C.snapshot(scene,state.cursor);
-    const selected = state.selectedBusiness == null ? null : scene.business[state.selectedBusiness];
     document.getElementById('sse-list').innerHTML = scene.sse.map(record => {
       const label = C.describe(record,scene.protocol), index = record.event_index;
-      const inRange = selected && index >= selected.first_event_index && index <= selected.last_event_index;
-      return `<button class="sse-row ${index === state.cursor ? 'selected' : ''} ${index > state.cursor ? 'future' : ''} ${inRange ? 'in-range' : ''}" data-action="jump" data-index="${index}" aria-label="查看 SSE 第 ${index} 条：${e(label.type)}" aria-pressed="${index === state.cursor}"><span class="event-ordinal">${String(index).padStart(2,'0')}</span><span class="event-dot ${label.category}"></span><span class="event-row-copy"><span class="event-row-title">${e(label.type)}</span><span class="event-row-detail">${e(label.detail)}</span></span>${record.object?.sequence_number != null ? `<span class="upstream-seq">s${record.object.sequence_number}</span>` : ''}</button>`;
+      return `<button class="sse-row ${index === state.cursor ? 'selected' : ''} ${index > state.cursor ? 'future' : ''}" data-action="jump" data-index="${index}" aria-label="查看 SSE 第 ${index} 条：${e(upstreamType(record))} · ${e(label.type)}" aria-pressed="${index === state.cursor}"><span class="event-ordinal">${String(index).padStart(2,'0')}</span><span class="event-dot ${label.category}"></span><span class="event-row-copy"><span class="event-row-title">${e(upstreamType(record))}</span><span class="event-row-detail">${scene.protocol === 'chat' && record.object?.object ? `JSON object: ${e(record.object.object)} · ` : ''}${e(label.type)} · ${e(label.detail)}</span></span>${record.object?.sequence_number != null ? `<span class="upstream-seq">s${record.object.sequence_number}</span>` : ''}</button>`;
     }).join('');
     const source = scene.sse[state.cursor-1];
-    document.getElementById('source-title').textContent = source ? `SSE #${source.event_index} · ${state.sourceMode === 'json' ? '上游 JSON' : '重建事件帧'}` : '等待第一条事件';
+    document.getElementById('source-title').textContent = source ? `SSE #${source.event_index} · ${upstreamType(source)} · ${state.sourceMode === 'json' ? '上游 JSON' : '重建事件帧'}` : '等待第一条事件';
     document.getElementById('source-mode-button').textContent = state.sourceMode === 'json' ? '查看 SSE 帧' : '查看 JSON';
     const value = source ? source.object ?? source.data : null;
     document.getElementById('source-code').innerHTML = source ? state.sourceMode === 'json' ? C.highlight(C.pretty(value)) : e(asFrame(source)) : '<span class="json-key">点击播放或选择一条事件开始。</span>';
@@ -108,7 +111,6 @@
     snapshotToggle.textContent = V.toggleLabel(state.snapshotMode);
     snapshotToggle.classList.toggle('active',state.snapshotMode === 'json');
     snapshotToggle.setAttribute('aria-pressed',String(state.snapshotMode === 'json'));
-    document.getElementById('business-list').innerHTML = scene.business.map((record,index) => renderBusiness(record,index)).join('');
     document.getElementById('playback-step').innerHTML = `<b>${String(state.cursor).padStart(2,'0')}</b> / ${String(scene.sse.length).padStart(2,'0')} SSE`;
     document.getElementById('event-progress').value = state.cursor;
     document.getElementById('event-progress').setAttribute('aria-valuetext',`已接收 ${state.cursor} 条，共 ${scene.sse.length} 条 SSE`);
@@ -133,19 +135,11 @@
     return content;
   }
 
-  function renderBusiness(record,index) {
-    const event = record.object;
-    const cache = event.usage ? C.normalizeUsage(event.usage,'responses') : null;
-    let detail = event.delta != null ? `<code>${e(event.delta)}</code>` : event.arguments != null ? `<code>${e(event.arguments)}</code>` : event.usage ? `${event.usage.input_tokens} 输入 / ${event.usage.output_tokens} 输出 / ${event.usage.total_tokens} 总计<span class="business-cache">${U.cacheLabel} ${U.count(cache.cached_tokens)} token / ${U.rate(cache.cache_hit_rate)}</span>` : e(event.name || event.finish_reason || event.error || (event.type === 'done' ? '请求协议完整' : ''));
-    const range = record.first_event_index === record.last_event_index ? `#${record.event_index}` : `#${record.first_event_index}–${record.last_event_index}`;
-    return `<button class="business-row ${event.type === 'error' ? 'error' : ''} ${record.event_index > state.cursor ? 'future' : ''} ${state.selectedBusiness === index ? 'selected' : ''}" data-action="business" data-business-index="${index}" aria-label="${e(event.type)}，来源 SSE ${range}"><span class="business-node"></span><span class="business-copy"><span class="business-type">${e(event.type)}<span class="business-index">SSE ${range}</span></span>${detail ? `<span class="business-detail">${detail}</span>` : ''}${event.tool_index != null ? `<span class="business-meta">choice ${event.choice_index} · tool ${event.tool_index}</span>` : ''}</span></button>`;
-  }
-
   function renderCompare() {
-    return `<p class="compare-intro">同一场景的两次独立真实请求。原始事件数和序号各自独立；第三层用统一名称表达业务过程。</p><div class="compare-grid">${[scene,counterpart].sort((a,b) => a.protocol.localeCompare(b.protocol)).map(item => {
+    return `<p class="compare-intro">同一场景的两次独立真实请求。上游事件类型、序号和最终结果各自独立。</p><div class="compare-grid">${[scene,counterpart].sort((a,b) => a.protocol.localeCompare(b.protocol)).map(item => {
       const view = C.finalView(item), counts = {};
-      item.business.forEach(record => {const type = record.object.type;counts[type] = (counts[type] || 0)+1;});
-      return `<article class="compare-card"><div class="compare-header"><h2>${protocolName(item.protocol)}</h2><span class="badge ${item.httpError ? 'warn' : 'good'}">HTTP ${item.httpStatus}</span></div><div class="compare-body"><div class="compare-facts"><div><span>SSE 事件</span><strong>${item.sse.length}</strong></div><div><span>工具</span><strong>${view.tools.length}</strong></div><div><span>总 token</span><strong>${item.httpError ? '—' : item.tokens}</strong></div></div>${item.httpError ? '<div class="notice">HTTP 错误没有 SSE 三层对象。符合预期的 400 拒绝仍计为场景通过。</div>' : `${U.breakdown(view.usage,'compare')}<div class="text-label">统一业务事件计数</div>${Object.entries(counts).map(([type,count]) => `<div class="compare-type-count"><span>${e(type)}</span><b>${count}</b></div>`).join('')}${view.tools.map(tool => `<div class="tool-card" style="margin-top:13px"><div class="tool-title"><strong>${e(tool.name)}</strong><span class="badge">tool ${tool.index}</span></div><pre class="arguments" style="margin-top:9px">${C.highlight(tool.arguments)}</pre></div>`).join('')}${view.text ? `<div class="text-label" style="margin-top:15px">完整正文</div><div class="text-output">${e(view.text)}</div>` : ''}`}<div class="compare-bottom"><a href="${href(item.id)}">打开此场景 ${icon('next',12)}</a></div></div></article>`;
+      item.sse.forEach(record => {const type = upstreamType(record);counts[type] = (counts[type] || 0)+1;});
+      return `<article class="compare-card"><div class="compare-header"><h2>${protocolName(item.protocol)}</h2><span class="badge ${item.httpError ? 'warn' : 'good'}">HTTP ${item.httpStatus}</span></div><div class="compare-body"><div class="compare-facts"><div><span>SSE 事件</span><strong>${item.sse.length}</strong></div><div><span>工具</span><strong>${view.tools.length}</strong></div><div><span>总 token</span><strong>${item.httpError ? '—' : item.tokens}</strong></div></div>${item.httpError ? '<div class="notice">HTTP 错误没有 SSE 累积过程。符合预期的 400 拒绝仍计为场景通过。</div>' : `${U.breakdown(view.usage,'compare')}<div class="text-label">上游事件类型计数</div>${Object.entries(counts).map(([type,count]) => `<div class="compare-type-count"><span>${e(type)}</span><b>${count}</b></div>`).join('')}${view.tools.map(tool => `<div class="tool-card" style="margin-top:13px"><div class="tool-title"><strong>${e(tool.name)}</strong><span class="badge">tool ${tool.index}</span></div><pre class="arguments" style="margin-top:9px">${C.highlight(tool.arguments)}</pre></div>`).join('')}${view.text ? `<div class="text-label" style="margin-top:15px">完整正文</div><div class="text-output">${e(view.text)}</div>` : ''}`}<div class="compare-bottom"><a href="${href(item.id)}">打开此场景 ${icon('next',12)}</a></div></div></article>`;
     }).join('')}</div>`;
   }
 
@@ -176,9 +170,8 @@
     }
   }
 
-  function setCursor(value, preserveBusiness=false) {
+  function setCursor(value) {
     state.cursor = Math.max(0,Math.min(scene.sse.length,Number(value) || 0));
-    if (!preserveBusiness) state.selectedBusiness = null;
     if (state.cursor === scene.sse.length) stopPlayback();
     if (!scene.httpError) renderPlayback();
   }
@@ -246,10 +239,6 @@
     if (action === 'prev') {stopPlayback();setCursor(state.cursor-1);}
     if (action === 'next') {stopPlayback();setCursor(state.cursor+1);}
     if (action === 'jump') {stopPlayback();setCursor(button.dataset.index);}
-    if (action === 'business') {
-      stopPlayback();state.selectedBusiness = Number(button.dataset.businessIndex);
-      setCursor(scene.business[state.selectedBusiness].event_index,true);
-    }
     if (action === 'snapshot-mode') {state.snapshotMode = state.snapshotMode === 'json' ? 'visual' : 'json';renderPlayback();}
     if (action === 'source-mode') {state.sourceMode = state.sourceMode === 'json' ? 'frame' : 'json';renderPlayback();}
     if (action === 'copy') copy(content(button.dataset.content).text);

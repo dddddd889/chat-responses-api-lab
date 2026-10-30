@@ -36,13 +36,19 @@ async function open(id,t) {
 }
 
 for (const scene of meta.scenarios) {
-  test(`${scene.id}：页面实际渲染与三层组件`,{skip:!modulePath},async t => {
+  test(`${scene.id}：页面实际渲染与三列对照`,{skip:!modulePath},async t => {
     const dom = await open(scene.id,t), document = dom.window.document;
     const prepared = C.prepare(scene);
     assert.ok(document.querySelector('h1').textContent.includes(scene.title));
     assert.equal(document.querySelectorAll('.scenario-link').length,14);
     assert.equal(document.querySelectorAll('.sse-row').length,prepared.sse.length);
-    assert.equal(document.querySelectorAll('.business-row').length,prepared.business.length);
+    assert.equal(document.querySelectorAll('.business-row').length,0);
+    if (scene.httpStatus !== 400) {
+      const titles = [...document.querySelectorAll('.workbench > .panel .panel-title')].map(node => node.textContent);
+      assert.equal(titles.length,3);
+      assert.ok(titles[0].startsWith('上游 SSE'));assert.ok(titles[1].startsWith('拼接状态'));assert.ok(titles[2].startsWith('完整结果'));
+      assert.ok(document.querySelector('.final-result-panel [aria-label="日志完整结果 JSON"]'));
+    }
     if (scene.httpStatus !== 400) document.querySelector('[data-action="snapshot-mode"]').click();
     assert.equal(document.querySelectorAll('.protocol-switch a').length,2);
     if (scene.httpStatus === 400) {
@@ -55,7 +61,7 @@ for (const scene of meta.scenarios) {
   });
 }
 
-test('进度、参数拼接、来源范围、协议对照、筛选和搜索可以联动',{skip:!modulePath},async t => {
+test('进度、参数拼接、完整结果、协议对照、筛选和搜索可以联动',{skip:!modulePath},async t => {
   const dom = await open('chat-multi_tool',t), window = dom.window, document = window.document;
   const prepared = C.prepare(meta.scenarios.find(scene => scene.id === 'chat-multi_tool'));
   document.querySelector('[data-action="snapshot-mode"]').click();
@@ -67,10 +73,8 @@ test('进度、参数拼接、来源范围、协议对照、筛选和搜索可�
   assert.equal(document.querySelector('#snapshot-body .arguments').textContent,'{"');
   document.querySelector('[data-action="source-mode"]').click();
   assert.ok(document.querySelector('#source-code').textContent.startsWith('data: '));
-  const doneIndex = prepared.business.findIndex(record => record.object.type === 'tool_done');
-  document.querySelector(`.business-row[data-business-index="${doneIndex}"]`).click();
-  const done = prepared.business[doneIndex];
-  assert.equal(document.querySelectorAll('.sse-row.in-range').length,done.last_event_index-done.first_event_index+1);
+  const done = prepared.sse.find(record => record.object?.choices?.some(choice => choice.finish_reason === 'tool_calls'));
+  document.querySelector(`.sse-row[data-index="${done.event_index}"]`).click();
   assert.equal(document.querySelectorAll('#snapshot-body .tool-card').length,2);
   const slider = document.querySelector('#event-progress');slider.value='5';slider.dispatchEvent(new window.Event('input',{bubbles:true}));
   assert.equal(document.querySelector('.playback-step b').textContent,'05');
@@ -184,4 +188,22 @@ test('逐步选择 SSE 会更新字段对照，完整结果保持不变，终点
     assert.ok(panel.textContent.includes('逐字段一致'));
     assert.equal(panel.querySelector('.comparison-table'),null);
   }
+});
+
+// 完整事件类型直接可见；同一条参数增量同时关联左侧事件与中间累积值。
+test('上游列表和检查器显示完整 event type，Chat event 与 JSON object 分开标注',{skip:!modulePath},async t => {
+  const responses = await open('responses-tool',t), document = responses.window.document;
+  const scene = C.prepare(meta.scenarios.find(scene => scene.id === 'responses-tool'));
+  const delta = scene.sse.find(record => record.object?.type === 'response.function_call_arguments.delta');
+  const row = document.querySelector(`.sse-row[data-index="${delta.event_index}"]`);
+  assert.equal(row.querySelector('.event-row-title').textContent,'response.function_call_arguments.delta');
+  row.click();
+  assert.ok(document.getElementById('source-title').textContent.includes('response.function_call_arguments.delta'));
+  assert.equal(JSON.parse(document.querySelector('#snapshot-body .code').textContent).output[0].arguments,delta.object.delta);
+  const final = JSON.parse(document.querySelector('.final-result-panel .code').textContent);
+  assert.deepEqual(final,scene.result.object);
+  assert.notEqual(final.output[0].arguments,delta.object.delta);
+  const chat = await open('chat-tool',t), chatDocument = chat.window.document;
+  assert.equal(chatDocument.querySelector('.event-row-title').textContent,'message');
+  assert.ok(chatDocument.querySelector('.event-row-detail').textContent.includes('JSON object: chat.completion.chunk'));
 });
