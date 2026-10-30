@@ -4,3 +4,19 @@
 
 /* 字段对照独立滚动，长参数与移动端不撑开页面。 */
 .result-comparison{margin-top:16px}.comparison-update,.comparison-status{margin:12px 16px;font-size:12px;overflow-wrap:anywhere}.comparison-status{color:var(--teal)}.comparison-table-wrap{max-height:360px;overflow:auto;margin:0 16px 16px}.comparison-table{border-collapse:collapse;width:100%;font-size:11px;text-align:left;table-layout:fixed}.comparison-table th,.comparison-table td{padding:9px;border:1px solid var(--border);vertical-align:top;overflow-wrap:anywhere}.comparison-table th{background:var(--paper);position:sticky;top:0}.comparison-table pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:0;font:11px/1.6 var(--mono)}.comparison-table code{font-size:10px}.result-comparison>details>.code{max-height:480px;overflow:auto;padding:16px;margin:0;background:#111e2b}.result-comparison summary{cursor:pointer}@media(max-width:760px){.comparison-table{min-width:600px}}
+
+/* 固定对照区时为右侧留空；窄屏使用底部半屏，保留上方事件操作空间。 */
+body{--comparison-width:clamp(360px,35vw,540px)}
+.comparison-pinned .main{max-width:none;padding-right:calc(var(--comparison-width) + 48px)}
+.comparison-pinned .workbench{grid-template-columns:repeat(2,minmax(0,1fr))}
+.comparison-pinned .workbench .business-panel{grid-column:1/-1}
+.comparison-pinned .result-comparison{position:fixed;z-index:10;right:16px;top:16px;bottom:16px;width:var(--comparison-width);margin:0;overflow:auto;overscroll-behavior:contain;box-shadow:0 8px 32px #18233626}
+.comparison-pinned .result-comparison>.panel-head{position:sticky;top:0;z-index:2;background:var(--white);gap:8px}
+.comparison-pinned .result-comparison .panel-title{min-width:0}
+.comparison-pinned .result-comparison .panel-actions{flex-shrink:0}
+@media(min-width:1001px) and (max-width:1450px){.comparison-pinned .workbench{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:1000px){.comparison-pinned .main{padding-right:20px;padding-bottom:calc(48vh + 32px)}.comparison-pinned .result-comparison{top:auto;right:12px;bottom:12px;width:min(540px,calc(100vw - 24px));height:48vh}.comparison-pinned .comparison-table{min-width:0}}
+@media(max-width:760px){.comparison-pinned .main{padding-right:14px}.comparison-pinned .workbench{display:block}}
+@media print{.comparison-pinned .main{padding:0}.comparison-pinned .result-comparison{position:static;width:auto;height:auto;overflow:visible;box-shadow:none}.result-comparison [data-action="pin-comparison"]{display:none}}
+
+@media(min-width:1001px){.comparison-pinned .stats{grid-template-columns:repeat(3,minmax(0,1fr))}.comparison-pinned .cache-stat{grid-column:span 2}.comparison-pinned .stat-icon,.comparison-pinned .topbar-note,.comparison-pinned .playback-meta .keyboard-hint,.comparison-pinned .playback-meta .keycap{display:none}.comparison-pinned .playback-bar{flex-wrap:wrap}.comparison-pinned .playback-slider{min-width:160px}}
