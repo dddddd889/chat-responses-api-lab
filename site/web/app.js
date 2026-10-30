@@ -15,48 +15,43 @@
   const counterpart = scenes.find(item => item.kind === scene.kind && item.protocol !== scene.protocol);
   const params = new URLSearchParams(location.search);
   const app = document.getElementById('app');
-  const state = {cursor:params.has('step') ? Math.max(0,Math.min(scene.sse.length,Math.trunc(Number(params.get('step'))) || 0)) : scene.sse.length, tab:['replay','journey','compare','result'].includes(params.get('tab')) ? params.get('tab') : 'replay', journeyStage:J.stages.some(stage => stage.id === params.get('stage')) ? params.get('stage') : 'eventlog', journeyTool:params.get('call'), filter:'all', search:'', sourceMode:params.get('source') === 'frame' ? 'frame' : 'json', resultMode:params.get('result_view') === 'diff' ? 'diff' : 'json', snapshotMode:['json','visual','diff'].includes(params.get('view')) ? params.get('view') : 'diff', playing:false, interval:650, timer:null};
+  const state = {cursor:params.has('step') ? Math.max(0,Math.min(scene.sse.length,Math.trunc(Number(params.get('step'))) || 0)) : scene.sse.length, tab:['replay','journey','compare','result'].includes(params.get('tab')) ? params.get('tab') : 'replay', journeyStage:J.stages.some(stage => stage.id === params.get('stage')) ? params.get('stage') : 'eventlog', journeyTool:params.get('call'), search:'', sourceMode:params.get('source') === 'frame' ? 'frame' : 'json', resultMode:params.get('result_view') === 'diff' ? 'diff' : 'json', snapshotMode:['json','visual','diff'].includes(params.get('view')) ? params.get('view') : 'diff', playing:false, interval:650, timer:null};
   let toastTimer;
   const icon = (name,size=15) => {
     const paths = {play:'<path d="m8 5 11 7-11 7Z"/>',pause:'<path d="M8 5v14M16 5v14"/>',back:'<path d="M6 5v14m12-14L8 12l10 7Z"/>',prev:'<path d="m15 5-7 7 7 7"/>',next:'<path d="m9 5 7 7-7 7"/>',code:'<path d="m8 6-6 6 6 6m8-12 6 6-6 6m-5 2 2-16"/>',flow:'<rect x="3" y="4" width="6" height="5" rx="1"/><rect x="15" y="15" width="6" height="5" rx="1"/><path d="M6 9v8h9m-1-4 4 4-4 4"/>',braces:'<path d="M9 3H7v6l-3 3 3 3v6h2m6-18h2v6l3 3-3 3v6h-2"/>',copy:'<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M15 8V3H3v12h5"/>',download:'<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',compare:'<path d="M12 3v18M4 7h4v10H4M16 7h4v10h-4"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/>',check:'<path d="m5 12 4 4L19 6"/>',link:'<path d="m10 13 4-4m-6 7-2 2a4 4 0 0 1-6-6l5-5a4 4 0 0 1 6 0m2 1 2-2a4 4 0 0 1 6 6l-5 5a4 4 0 0 1-6 0"/>'};
     return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.code}</svg>`;
   };
   const e = C.escapeHTML;
-  const href = id => `${base}scenarios/${id}/index.html`;
+  // 协议由场景路径表达；切换协议或场景时保留页面状态，并校正目标进度。
+  const href = (id,preserve=false) => {
+    const path = `${base}scenarios/${id}/index.html`;
+    if (!preserve) return path;
+    const target = byID.get(id), url = new URL(path,location.href);
+    url.search = routeURL().search;
+    url.searchParams.set('step',Math.min(state.cursor,target.sse.length));
+    if (!C.finalView(target).tools.some(tool => J.toolKey(tool) === state.journeyTool)) url.searchParams.delete('call');
+    return url.href;
+  };
   const protocolName = protocol => protocol === 'chat' ? 'Chat Completions' : 'Responses API';
   const statusLabel = status => ({waiting:'未开始',streaming:'拼接中',complete:'协议完整',partial:'部分结果',truncated:'生成截断',http_error:'HTTP 错误'}[status] || status);
 
-  // 侧栏过滤只影响场景列表，当前场景与回放状态保持不变。
+  // 左侧每种场景只列一次，跟随右上角当前协议；搜索不改变场景或回放。
   function renderNav() {
     const query = state.search.toLowerCase();
-    let html = '';
-    for (const protocol of ['chat','responses']) {
-      if (state.filter !== 'all' && state.filter !== protocol) continue;
-      const matches = scenes.filter(item => item.protocol === protocol && `${item.id} ${item.title} ${item.description}`.toLowerCase().includes(query));
-      if (!matches.length) continue;
-      html += `<div class="nav-group-label">${protocol === 'chat' ? 'CHAT COMPLETIONS' : 'RESPONSES API'} <span>${matches.length}</span></div>`;
-      html += matches.map(item => `<a class="scenario-link ${item.id === scene.id ? 'active' : ''} ${['length','http_error'].includes(item.kind) ? 'warn' : ''}" href="${href(item.id)}" ${item.id === scene.id ? 'aria-current="page"' : ''}><span class="scenario-number">${item.number}</span><span>${e(item.title)}</span><span class="scene-status" aria-hidden="true"></span></a>`).join('');
-    }
-    document.getElementById('scenario-nav').innerHTML = html || '<div class="empty-state">没有匹配的场景</div>';
-    document.querySelectorAll('[data-filter]').forEach(button => {button.classList.toggle('active',button.dataset.filter === state.filter);button.setAttribute('aria-pressed',String(button.dataset.filter === state.filter));});
+    const matches = scenes.filter(item => item.protocol === scene.protocol && `${item.title} ${item.kind} ${item.description}`.toLowerCase().includes(query));
+    const html = `<div class="nav-group-label">场景 <span>${matches.length}</span></div>` + matches.map(item => `<a class="scenario-link ${item.id === scene.id ? 'active' : ''} ${['length','http_error'].includes(item.kind) ? 'warn' : ''}" data-scene="${item.id}" href="${href(item.id,true)}" ${item.id === scene.id ? 'aria-current="page"' : ''}><span class="scenario-number">${item.number}</span><span>${e(item.title)}</span><span class="scene-status" aria-hidden="true"></span></a>`).join('');
+    document.getElementById('scenario-nav').innerHTML = matches.length ? html : '<div class="empty-state">没有匹配的场景</div>';
   }
 
   // 页面框架与回放内容分开渲染，拖动进度条时保留焦点和控制按钮。
   function renderScene() {
-    const count = final.tools.length;
     const isError = !!scene.httpError;
     document.title = `${scene.title} · ${protocolName(scene.protocol)} · SSE 流观察室`;
     document.getElementById('dataset-meta').textContent = `${dataset.date} · ${dataset.totalTokens.toLocaleString()} tokens`;
     document.getElementById('main').innerHTML = `
       <div class="topbar"><div class="breadcrumb">场景浏览器 <span class="sep">/</span> ${protocolName(scene.protocol)} <span class="sep">/</span><span>${e(scene.title)}</span></div><div class="topbar-note">14 个实测场景 · 浏览不产生 API 调用</div></div>
-      <header class="hero"><div><div class="eyebrow"><span>SCENARIO ${scene.number}</span> / LIVE CAPTURE · ${dataset.date}</div><h1>${e(scene.title)}<span style="color:#c2cdd5;font-weight:400">.</span></h1><p>${e(scene.description)}</p></div><nav class="protocol-switch" aria-label="同场景切换接口">${['chat','responses'].map(protocol => `<a class="${scene.protocol === protocol ? 'active' : ''}" href="${href(`${protocol}-${scene.kind}`)}" ${scene.protocol === protocol ? 'aria-current="page"' : ''}>${protocol === 'chat' ? 'Chat' : 'Responses'}</a>`).join('')}</nav></header>
-      <div class="stats">
-        ${stat('HTTP 状态',scene.httpStatus,isError ? '按预期拒绝' : '上游响应成功',isError ? 'warn':'good','check')}
-        ${stat('完整 SSE 事件',scene.sse.length,isError ? '未进入 SSE 流' : scene.protocol === 'chat' ? '含最后一条 [DONE]' : '含响应生命周期事件','','flow')}
-        ${stat('工具调用',count,count ? '独立 index · 独立参数' : '此场景没有函数工具调用','','braces')}
-        ${stat('日志终点用量（不随回放）',isError ? '—' : scene.tokens,isError ? '未返回 usage' : '输入 + 输出 · 不按事件累加','','clock')}
-        <div aria-label="日志终点缓存统计">${U.overview(final.usage)}</div>
-      </div>
+      <header class="hero"><div><div class="eyebrow"><span>SCENARIO ${scene.number}</span> / LIVE CAPTURE · ${dataset.date}</div><h1>${e(scene.title)}<span style="color:#c2cdd5;font-weight:400">.</span></h1><p>${e(scene.description)}</p></div><nav class="protocol-switch" aria-label="同场景切换接口">${['chat','responses'].map(protocol => `<a class="${scene.protocol === protocol ? 'active' : ''}" data-scene="${protocol}-${scene.kind}" href="${href(`${protocol}-${scene.kind}`,true)}" ${scene.protocol === protocol ? 'aria-current="page"' : ''}>${protocol === 'chat' ? 'Chat' : 'Responses'}</a>`).join('')}</nav></header>
+      <div class="http-summary"><span class="badge ${isError ? 'warn' : 'good'}">HTTP ${scene.httpStatus}</span><span>${isError ? '未建立 SSE 流' : '已记录上游响应'}</span></div>
       ${U.definitions(scene)}
       <div class="tabs" role="tablist" aria-label="日志查看模式">
         <button class="tab" role="tab" id="tab-replay" aria-controls="pane-replay" data-tab="replay">${icon('flow')}逐步回放<span class="tiny-count">${scene.sse.length}</span></button>
@@ -85,9 +80,6 @@
     if (!isError) renderPlayback();
   }
 
-  function stat(label,value,caption,color,name) {
-    return `<div class="stat"><span class="stat-icon">${icon(name,14)}</span><div class="stat-name">${label}</div><div class="stat-value ${color}">${value}</div><div class="stat-caption">${caption}</div></div>`;
-  }
 
   // Responses 使用完整 type；Chat 显示 SSE event，不将 JSON object 冒充事件类型。
   function upstreamType(record) {
@@ -182,6 +174,7 @@
   function syncRoute(mode='replace') {
     if (mode === 'none') return;
     const url = routeURL();
+    document.querySelectorAll('a[data-scene]').forEach(link => {link.href = href(link.dataset.scene,true);});
     if (url.href !== location.href) history[mode === 'push' ? 'pushState' : 'replaceState'](null,'',url.href);
   }
 
@@ -259,7 +252,6 @@
   app.addEventListener('click',event => {
     const button = event.target.closest('button');
     if (!button) return;
-    if (button.dataset.filter) {state.filter = button.dataset.filter;renderNav();return;}
     if (button.dataset.tab) {selectTab(button.dataset.tab);return;}
     const action = button.dataset.action;
     if (action === 'journey-stage' || action === 'journey-tool') {
@@ -311,6 +303,7 @@
     state.sourceMode = route.get('source') === 'frame' ? 'frame' : 'json';
     document.getElementById('pane-journey').innerHTML = J.render(scene,state.journeyStage,state.journeyTool);
     selectTab(state.tab,'none');
+    document.querySelectorAll('a[data-scene]').forEach(link => {link.href = href(link.dataset.scene,true);});
     if (!scene.httpError) renderPlayback();
   });
   window.addEventListener('pagehide',stopPlayback);

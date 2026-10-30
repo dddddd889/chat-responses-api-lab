@@ -70,6 +70,10 @@ Chat 的 `reasoning_content` 是提供方扩展字段，逐条追加；Responses
 
 用量来源：回放两栏的 usage 仅来自当前进度已经收到的上游事件，未收到时保持 null。右栏标出用量来源的 SSE 序号。顶部概览、字段说明和“完整结果”标签页明确标为日志终点数据，不随回放变化。
 
-完整过程当前只演示工具调用链路。无工具场景仍保留真实模型响应，其余阶段标明不适用，并说明正文/推理转换尚未实现展示；不把未实现展示冒充空运行记录。
+完整过程同时展示正文、推理和工具块：pi-ai 累积内容与结束事件 → Harness block-end → assistant 消息 → EventLog 事件片段。无工具时仅执行工具阶段不适用，下一次请求仍标未采集。长度上限保留已生成内容并标注 max-tokens；HTTP 错误不生成 assistant 消息。usage 单独放在 EventLog data.usage，按 pi-ai 扣除缓存后的 input 映射。未采集的消息 ID、签名、seq/time、turn/step、stream 不伪造。此页读取整次记录终点，独立于回放 step。
+
+参考 pi-ai 1.1.0 的 openai-completions/openai-responses-shared，以及 Harness 固定提交的 stream.ts、assembler.ts、agent.ts。离线加载真实适配器因本地缺少 @deepseek-ai/dsh-brand 工作区依赖未成功；验证限于源码核对、真实样本投影和观察室交互测试，没有捕获实际 Harness EventLog。
+
+左侧只列 7 种场景，右上角保留 Chat / Responses 协议标签。协议写入 URL 路径，切换时保留主标签、阶段和展示模式；进度限制在目标样本范围内，无效的工具选择清除。移除首屏五张统计卡片，HTTP 状态使用紧凑标记；事件总数、Token 字段说明与回放用量仍保留在对应区域。
 
 路由状态：URL 查询参数 `tab` 保存主标签，`step` 保存回放 SSE 序号，`stage` 保存过程阶段，`call` 保存选中工具，`view/result_view/source` 保存展示模式。交互实时更新地址；刷新、分享和前进后退恢复状态。标签、阶段与工具切换新增历史；连续进度变化替换当前历史，恢复历史时暂停播放。

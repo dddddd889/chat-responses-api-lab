@@ -47,7 +47,7 @@ for (const scene of meta.scenarios) {
     const dom = await open(scene.id,t), document = dom.window.document;
     const prepared = C.prepare(scene);
     assert.ok(document.querySelector('h1').textContent.includes(scene.title));
-    assert.equal(document.querySelectorAll('.scenario-link').length,14);
+    assert.equal(document.querySelectorAll('.scenario-link').length,7);
     assert.equal(document.querySelectorAll('.sse-row').length,prepared.sse.length);
     assert.equal(document.querySelectorAll('.business-row').length,0);
     if (scene.httpStatus !== 400) {
@@ -60,7 +60,7 @@ for (const scene of meta.scenarios) {
     assert.equal(document.querySelectorAll('.protocol-switch a').length,2);
     if (scene.httpStatus === 400) {
       assert.ok(document.querySelector('.http-card').textContent.includes('未建立 SSE'));
-      assert.equal(document.querySelectorAll('.stats .stat-value')[3].textContent,'—');
+      assert.equal(document.querySelector('.stats'),null);
     } else {
       assert.equal(document.querySelector('.playback-step b').textContent,String(prepared.sse.length).padStart(2,'0'));
       assert.equal(document.querySelector('.usage-grid .total strong').textContent,String(scene.tokens));
@@ -89,10 +89,10 @@ test('进度、参数拼接、完整结果、协议对照、筛选和搜索可�
   assert.equal(document.querySelector('#pane-compare').hidden,false);
   assert.equal(document.querySelector('#pane-replay').hidden,true);
   assert.equal(document.querySelectorAll('.compare-card').length,2);
-  document.querySelector('[data-filter="responses"]').click();assert.equal(document.querySelectorAll('.scenario-link').length,7);
+  assert.equal(document.querySelectorAll('.scenario-link').length,7);assert.equal(document.querySelector('[data-filter]'),null);
   const search = document.querySelector('#scenario-search');search.value='双工具';search.dispatchEvent(new window.Event('input',{bubbles:true}));
   assert.equal(document.querySelectorAll('.scenario-link').length,1);
-  assert.ok(document.querySelector('.scenario-link').href.includes('responses-multi_tool'));
+  assert.ok(document.querySelector('.scenario-link').href.includes('chat-multi_tool'));
 });
 
 test('播放会推进序号，暂停后停止，切换标签保留正确可访问状态',{skip:!modulePath},async t => {
@@ -116,8 +116,8 @@ test('双工具缓存命中 128、命中率 42.7%，回放归零时统计未知'
   for (const protocol of ['chat','responses']) {
     const dom = await open(protocol+'-multi_tool',t), document = dom.window.document;
     document.querySelector('[data-action="snapshot-mode"]').click();
-    assert.equal(document.querySelector('[data-metric="cache"] [data-cache="cached"]').textContent,'128');
-    assert.equal(document.querySelector('[data-metric="cache"] [data-cache="rate"]').textContent,'42.7%');
+    assert.ok(document.querySelector('.token-equation').textContent.includes('128'));
+    assert.ok(document.querySelector('.token-equation').textContent.includes('42.7%'));
     assert.equal(document.querySelector('#snapshot-body [data-cache="uncached"]').textContent,'172');
     assert.equal(document.querySelector('#snapshot-body .cache-progress').value,128/300);
     assert.equal(document.querySelectorAll('[data-cache-context="compare"]').length,2);
@@ -127,7 +127,7 @@ test('双工具缓存命中 128、命中率 42.7%，回放归零时统计未知'
     document.querySelector('[data-action="reset"]').click();
     assert.equal(document.querySelector('#snapshot-body [data-cache="cached"]').textContent,'—');
     assert.equal(document.querySelector('#snapshot-body [data-cache="rate"]').textContent,'—');
-    assert.equal(document.querySelector('[data-metric="cache"] [data-cache="cached"]').textContent,'128');
+    assert.ok(document.querySelector('.token-equation').textContent.includes('128'));
   }
 });
 
@@ -169,13 +169,13 @@ test('JSON 视图使用日志同结构，当前累积值可直接对照最终结
   }
 });
 
-test('明确 0 命中显示 0%，HTTP 没有 usage 时显示未知',{skip:!modulePath},async t => {
+test('移除统计卡片仍保留零命中说明和 HTTP 状态',{skip:!modulePath},async t => {
   const zero = await open('chat-text',t);
-  assert.equal(zero.window.document.querySelector('[data-metric="cache"] [data-cache="cached"]').textContent,'0');
-  assert.equal(zero.window.document.querySelector('[data-metric="cache"] [data-cache="rate"]').textContent,'0%');
+  assert.match(zero.window.document.querySelector('.token-equation').textContent,/0%/);
+  assert.equal(zero.window.document.querySelector('.stats'),null);
   const unknown = await open('chat-http_error',t);
-  assert.equal(unknown.window.document.querySelector('[data-metric="cache"] [data-cache="cached"]').textContent,'—');
-  assert.equal(unknown.window.document.querySelector('[data-metric="cache"] [data-cache="rate"]').textContent,'—');
+  assert.match(unknown.window.document.querySelector('.http-summary').textContent,/HTTP 400/);
+  assert.match(unknown.window.document.querySelector('.token-guide').textContent,/未返回 usage/);
 });
 
 // 完整事件类型直接可见；同一条参数增量同时关联左侧事件与中间累积值。
@@ -424,4 +424,26 @@ test('标签、阶段、工具和回放进度写入路由并可恢复',{skip:!mo
   await navigate('forward');
   assert.equal(document.querySelector('#tab-replay').getAttribute('aria-selected'),'true');
   assert.equal(document.querySelector('#event-progress').value,'4');
+});
+
+// 协议只由顶部标签切换，路径与页面状态一起保留，菜单不再重复分组。
+test('协议标签保留路由状态且菜单每个场景只出现一次',{skip:!modulePath},async t => {
+  const dom = await open('responses-thinking',t,'json','?tab=journey&stage=adapter&step=5'), document=dom.window.document;
+  assert.equal(document.querySelectorAll('.scenario-link').length,7);
+  assert.equal(document.querySelectorAll('[data-filter]').length,0);
+  assert.equal(document.querySelectorAll('.protocol-switch a').length,2);
+  const target = new URL(document.querySelector('.protocol-switch a[data-scene="chat-thinking"]').href);
+  assert.ok(target.pathname.endsWith('/chat-thinking/index.html'));
+  assert.equal(target.searchParams.get('tab'),'journey');assert.equal(target.searchParams.get('stage'),'adapter');
+  assert.equal(target.searchParams.get('step'),'5');
+  const restored = await open('chat-thinking',t,'json',target.search);
+  assert.equal(restored.window.document.querySelector('.protocol-switch .active').textContent,'Chat');
+  assert.equal(restored.window.document.querySelector('#tab-journey').getAttribute('aria-selected'),'true');
+  assert.equal(restored.window.document.querySelector('[data-stage="adapter"]').getAttribute('aria-current'),'step');
+  assert.equal(restored.window.document.querySelector('#event-progress').value,'5');
+  document.querySelector('[data-tab="replay"]').click();
+  const progress=document.querySelector('#event-progress');progress.value=42;progress.dispatchEvent(new dom.window.Event('input',{bubbles:true}));
+  const updated=new URL(document.querySelector('.protocol-switch a[data-scene="chat-thinking"]').href);
+  assert.equal(updated.searchParams.get('tab'),'replay');
+  assert.equal(updated.searchParams.get('step'),String(C.prepare(meta.scenarios.find(scene=>scene.id==='chat-thinking')).sse.length));
 });

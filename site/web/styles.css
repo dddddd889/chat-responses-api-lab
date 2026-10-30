@@ -39,3 +39,5 @@
 
 /* 补全的推理字段说明来源；与原始 Go 日志对象区分，避免误认历史记录。 */
 .reasoning-provenance{font-size:11px;line-height:1.8;color:#876628;background:#fff8e8;border:1px solid #eadbb9;border-radius:6px;padding:9px 11px;margin-bottom:12px}.reasoning-output{border-left:3px solid #8e84b8}
+/* HTTP 状态用紧凑行显示，不再占用整排统计卡片。 */
+.http-summary{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--muted);margin:0 0 14px}
