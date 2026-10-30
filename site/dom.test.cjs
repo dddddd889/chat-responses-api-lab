@@ -13,7 +13,7 @@ const meta = JSON.parse(JSON.stringify(sandbox.window.SSE_DATA));
 const C = require('./web/core.js');
 
 // 本地资源加载器拒绝网络访问，确保交互不会偷偷请求 API。
-async function open(id,t) {
+async function open(id,t,view='json') {
   const {JSDOM,VirtualConsole,ResourceLoader} = require(modulePath);
   const errors = [];
   const console = new VirtualConsole();console.on('jsdomError',error => errors.push(error));
@@ -32,6 +32,9 @@ async function open(id,t) {
     dom.window.addEventListener('load',() => {clearTimeout(timeout);resolve();},{once:true});
   });
   assert.deepEqual(errors.map(error => error.message),[]);
+  // 常规测试显式查看 JSON；差异视图由专门用例覆盖默认状态与切换。
+  const diffToggle = dom.window.document.querySelector('[data-action="snapshot-diff"]');
+  if (view === 'json' && diffToggle?.getAttribute('aria-pressed') === 'true') diffToggle.click();
   return dom;
 }
 
@@ -135,7 +138,7 @@ test('Token 中文字段说明保留原始命中别名，解释输入输出和�
   assert.ok(document.querySelector('.token-guide').textContent.includes('输入 300 = 命中 128 + 未命中 172'));
 });
 
-test('第二层默认展示日志同结构的 JSON，当前累积值可直接对照最终结果',{skip:!modulePath},async t => {
+test('JSON 视图使用日志同结构，当前累积值可直接对照最终结果',{skip:!modulePath},async t => {
   for (const protocol of ['chat','responses']) {
     const dom = await open(protocol+'-multi_tool',t), window = dom.window, document = window.document;
     const prepared = C.prepare(meta.scenarios.find(scene => scene.id === protocol+'-multi_tool'));
@@ -224,5 +227,39 @@ test('字段表的处理前后值均随连续 SSE 更新',{skip:!modulePath},asy
     accumulated += record.object.delta;
     assert.equal(row.cells[2].textContent,JSON.stringify(accumulated,null,2));
     assert.equal(document.querySelector('.final-result-panel .code').textContent,final);
+  }
+});
+
+// Git diff 的加减行必须能分别还原处理后的对象和处理前的对象。
+test('默认 Git diff 标记本条增删行，JSON 视图和复制仍保留完整对象',{skip:!modulePath},async t => {
+  for (const protocol of ['chat','responses']) {
+    const dom = await open(protocol+'-tool',t,'diff'), window = dom.window, document = window.document;
+    const scene = C.prepare(meta.scenarios.find(scene => scene.id === protocol+'-tool'));
+    assert.equal(document.querySelector('[data-action="snapshot-diff"]').getAttribute('aria-pressed'),'true');
+    const delta = scene.sse.find(record => protocol === 'responses'
+      ? record.object?.type === 'response.function_call_arguments.delta'
+      : record.object?.choices?.some(choice => choice.delta?.tool_calls?.some(tool => tool.function?.arguments)));
+    document.querySelector(`.sse-row[data-index="${delta.event_index}"]`).click();
+    const after = document.querySelectorAll('.snapshot-diff .diff-add');
+    assert.ok(after.length > 0);
+    assert.ok([...after].some(node => node.textContent.includes('arguments')));
+    const rows = [...document.querySelectorAll('.snapshot-diff .diff-line')];
+    const newJSON = JSON.parse(rows.filter(node => !node.classList.contains('diff-delete')).map(node => node.textContent.slice(1)).join('\n'));
+    const oldJSON = JSON.parse(rows.filter(node => !node.classList.contains('diff-add')).map(node => node.textContent.slice(1)).join('\n'));
+    assert.notDeepEqual(oldJSON,newJSON);
+    assert.ok(document.querySelector('.comparison-table .change-before'));
+    assert.ok(document.querySelector('.comparison-table .change-after'));
+    let copied;
+    Object.defineProperty(window.navigator,'clipboard',{value:{writeText:async value => {copied=value;}},configurable:true});
+    document.querySelector('[data-content="snapshot"]').click();await Promise.resolve();
+    assert.deepEqual(JSON.parse(copied),newJSON);
+    document.querySelector('[data-action="snapshot-mode"]').click();
+    assert.deepEqual(JSON.parse(document.querySelector('#snapshot-body .code').textContent),newJSON);
+    document.querySelector('[data-action="snapshot-diff"]').click();
+    document.querySelector('[data-action="reset"]').click();
+    assert.equal(document.querySelectorAll('.snapshot-diff .diff-add,.snapshot-diff .diff-delete').length,0);
+    document.querySelector(`.sse-row[data-index="${scene.sse.length}"]`).click();
+    if (protocol === 'chat') assert.equal(document.querySelectorAll('.snapshot-diff .diff-add,.snapshot-diff .diff-delete').length,0);
+    else assert.ok([...document.querySelectorAll('.snapshot-diff .diff-add')].some(node => node.textContent.includes('completed')));
   }
 });

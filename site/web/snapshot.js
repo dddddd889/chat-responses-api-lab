@@ -110,9 +110,39 @@
     return [{path,current,final}];
   }
 
-  // JSON 始终展示累积器对象；序号和状态留在对象外，方便直接复制对照。
+  // JSON 视图保留纯对象，复制按钮也始终复制该对象，不夹带 diff 标记。
   function render(scene, snapshot) {
     return `<div class="snapshot-json-label">截至 SSE #${snapshot.step} · 与完整结果使用相同字段结构</div><div class="snapshot-json"><pre class="code" tabindex="0" aria-label="合并对象 JSON">${C.highlight(C.pretty(object(scene,snapshot)))}</pre></div>`;
+  }
+
+  // 用最长公共子序列对齐两份 JSON 的行，保留未变行并区分删除行和新增行。
+  function diffLines(before, after) {
+    const oldLines = C.pretty(before).split('\n'), newLines = C.pretty(after).split('\n');
+    const lengths = Array.from({length:oldLines.length+1},() => new Uint32Array(newLines.length+1));
+    for (let i=oldLines.length-1;i>=0;i--) for (let j=newLines.length-1;j>=0;j--) {
+      lengths[i][j] = oldLines[i] === newLines[j] ? lengths[i+1][j+1]+1 : Math.max(lengths[i+1][j],lengths[i][j+1]);
+    }
+    const rows = [];
+    let i=0,j=0;
+    while (i<oldLines.length || j<newLines.length) {
+      if (i<oldLines.length && j<newLines.length && oldLines[i] === newLines[j]) {
+        rows.push({kind:'context',text:oldLines[i++]});j++;
+      } else if (i<oldLines.length && (j===newLines.length || lengths[i+1][j]>=lengths[i][j+1])) {
+        rows.push({kind:'delete',text:oldLines[i++]});
+      } else rows.push({kind:'add',text:newLines[j++]});
+    }
+    return {rows,oldCount:oldLines.length,newCount:newLines.length};
+  }
+
+  // Git 风格整文件差异：减号为本条处理前的行，加号为本条处理后的行。
+  function renderDiff(scene, snapshot) {
+    const previousStep = Math.max(0,snapshot.step-1);
+    const diff = diffLines(object(scene,{step:previousStep}),object(scene,snapshot));
+    const added = diff.rows.filter(row => row.kind === 'add').length;
+    const deleted = diff.rows.filter(row => row.kind === 'delete').length;
+    const header = `--- SSE #${previousStep}\n+++ SSE #${snapshot.step}\n@@ -1,${diff.oldCount} +1,${diff.newCount} @@`;
+    const rows = diff.rows.map(row => `<span class="diff-line diff-${row.kind}"><span class="diff-marker">${row.kind === 'add' ? '+' : row.kind === 'delete' ? '-' : ' '}</span>${C.highlight(row.text)}</span>`).join('\n');
+    return `<div class="snapshot-json-label">SSE #${previousStep} → #${snapshot.step} · <span class="diff-added-count">+${added} 行</span> / <span class="diff-deleted-count">−${deleted} 行</span><br>红色 − 处理前 · 绿色 + 处理后${added || deleted ? '' : ' · 本条无字段变化'}</div><div class="snapshot-json snapshot-diff"><pre class="code" tabindex="0" aria-label="拼接状态 Git diff"><span class="diff-header">${C.escapeHTML(header)}</span>\n${rows}</pre></div>`;
   }
 
   // 展示本条 SSE 的处理前后值；与日志终点的比较单独保留为状态提示。
@@ -123,9 +153,9 @@
     const diffs = differences(current,scene.result.object);
     const value = item => item === undefined ? '尚无此字段' : C.pretty(item);
     const updated = changes.length ? changes.map(change => `<code>${C.escapeHTML(change.path)}</code>`).join('、') : '本条没有更新已建模字段（可能是结束标记或扩展事件）';
-    const rows = changes.map(diff => `<tr><td><code>${C.escapeHTML(diff.path)}</code></td><td><pre>${C.escapeHTML(value(diff.current))}</pre></td><td><pre>${C.escapeHTML(value(diff.final))}</pre></td></tr>`).join('');
+    const rows = changes.map(diff => `<tr class="comparison-changed"><td><code>${C.escapeHTML(diff.path)}</code></td><td class="change-before"><pre>${C.escapeHTML(value(diff.current))}</pre></td><td class="change-after"><pre>${C.escapeHTML(value(diff.final))}</pre></td></tr>`).join('');
     return `<p class="comparison-update">${snapshot.step ? `SSE #${snapshot.step} 更新` : '尚未接收事件'}：${snapshot.step ? updated : '选择事件，观察字段逐步补全。'}</p><p class="comparison-status" role="status">${diffs.length ? `当前累积对象与右侧完整结果有 ${diffs.length} 处差异${snapshot.step === snapshot.max ? '，请检查终点结果' : '，继续接收事件后对照'}` : '逐字段一致：当前累积对象与日志完整结果相同'}</p>${changes.length ? `<div class="comparison-table-wrap"><table class="comparison-table"><thead><tr><th>字段路径</th><th>本条处理前</th><th>本条处理后</th></tr></thead><tbody>${rows}</tbody></table></div>` : ''}`;
   }
 
-  window.StreamSnapshotView = {object,render,comparison,differences,toggleLabel,copyLabel:'复制当前累积对象 JSON'};
+  window.StreamSnapshotView = {object,render,renderDiff,diffLines,comparison,differences,toggleLabel,copyLabel:'复制当前累积对象 JSON'};
 })();

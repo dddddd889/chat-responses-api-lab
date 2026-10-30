@@ -18,3 +18,9 @@
 .playback-bar{position:sticky;top:12px;z-index:5;box-shadow:0 5px 18px #18233614}
 @media(max-width:760px){.playback-bar{top:0}}
 @media print{.playback-bar{position:static;box-shadow:none}}
+
+/* Git 风格行差异；保留加减号，颜色之外也能区分新增和删除。 */
+.diff-line{color:inherit}.diff-add{background:#23863640}.diff-delete{background:#da363340}
+.diff-marker{display:inline-block;width:1.5em;user-select:none}.diff-add .diff-marker{color:#7ee787}.diff-delete .diff-marker{color:#ffa198}
+.diff-header{color:#b1a1ee}.diff-added-count{color:#26733c}.diff-deleted-count{color:#a53c36}
+.comparison-table .change-before{background:#fff0ef;border-left:3px solid #cf5750}.comparison-table .change-after{background:#eaf7ee;border-left:3px solid #38966a}.comparison-changed td:first-child{font-weight:600}
