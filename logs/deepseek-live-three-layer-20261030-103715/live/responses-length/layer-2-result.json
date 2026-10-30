@@ -1,0 +1,43 @@
+{
+  "time": "2026-10-30T02:37:33.809247Z",
+  "kind": "result",
+  "protocol": "responses",
+  "first_event_index": 1,
+  "last_event_index": 24,
+  "object": {
+    "id": "9d91a063-ab4e-4d9a-960d-8cd05152db07",
+    "status": "incomplete",
+    "model": "deepseek-flash",
+    "output": [
+      {
+        "id": "0752ebde-c3f8-48ad-b01e-fae290bbb872",
+        "type": "message",
+        "status": "incomplete",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "output_text",
+            "text": "1 2 3 4 5 6 7 8 "
+          }
+        ]
+      }
+    ],
+    "usage": {
+      "input_tokens": 21,
+      "output_tokens": 16,
+      "total_tokens": 37,
+      "input_tokens_details": {
+        "cached_tokens": 0
+      },
+      "output_tokens_details": {
+        "reasoning_tokens": 0
+      }
+    },
+    "error": null,
+    "incomplete_details": {
+      "reason": "max_output_tokens"
+    }
+  },
+  "status": "partial",
+  "error": "sse: response incomplete: response.incomplete"
+}

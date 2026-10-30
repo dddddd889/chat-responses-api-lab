@@ -1,0 +1,6 @@
+event:response.future
+data:{"extra":true,"sequence_number":0,"type":"response.future"}
+
+event:response.completed
+data:{"response":{"id":"offline","status":"completed","output":[]},"sequence_number":1,"type":"response.completed"}
+

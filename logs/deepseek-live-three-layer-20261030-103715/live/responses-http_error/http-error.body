@@ -1,0 +1,1 @@
+{"error":{"message":"The supported API model names are deepseek-flash, deepseek-v4-pro, but you passed codex-sse-invalid-model. (request_id: 92b39106-619d-4575-a857-c13436449efb)","type":"invalid_request_error","param":null,"code":"invalid_request_error"}}

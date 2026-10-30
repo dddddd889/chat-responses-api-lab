@@ -1,0 +1,1 @@
+{"time":"2026-10-30T02:37:41.750368Z","kind":"event","protocol":"chat","object":{"type":"error","status":"partial","error":"sse: event exceeds size limit"}}

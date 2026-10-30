@@ -1,0 +1,20 @@
+: Responses API 离线日志示例，不会请求模型
+
+event: response.created
+data: {"type":"response.created","sequence_number":0,"response":{"id":"resp_demo","status":"in_progress","model":"demo","output":[]}}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","sequence_number":1,"output_index":0,"item":{"id":"msg_demo","type":"message","role":"assistant","status":"in_progress","content":[]}}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":2,"output_index":0,"content_index":0,"item_id":"msg_demo","delta":"你好"}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":3,"output_index":0,"content_index":0,"item_id":"msg_demo","delta":"世界"}
+
+event: response.output_text.done
+data: {"type":"response.output_text.done","sequence_number":4,"output_index":0,"content_index":0,"item_id":"msg_demo","text":"你好世界"}
+
+event: response.completed
+data: {"type":"response.completed","sequence_number":5,"response":{"id":"resp_demo","status":"completed","model":"demo","output":[{"id":"msg_demo","type":"message","status":"completed","role":"assistant","content":[{"type":"output_text","text":"你好世界"}]},{"id":"fc_demo","type":"function_call","status":"completed","call_id":"call_demo","name":"weather","arguments":"{\"city\":\"上海\"}"}],"usage":{"input_tokens":10,"output_tokens":20,"total_tokens":30}}}
+

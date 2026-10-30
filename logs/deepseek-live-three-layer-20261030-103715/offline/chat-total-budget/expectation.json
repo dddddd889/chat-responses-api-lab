@@ -1,0 +1,8 @@
+{
+  "name": "chat-total-budget",
+  "source": "offline",
+  "protocol": "chat",
+  "status": "passed",
+  "detail": "expected=sse: accumulated chat exceeds size limit actual=sse: accumulated chat exceeds size limit",
+  "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-total-budget/events.jsonl"
+}

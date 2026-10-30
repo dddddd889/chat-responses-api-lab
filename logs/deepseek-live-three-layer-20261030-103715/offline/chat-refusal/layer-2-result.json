@@ -1,0 +1,25 @@
+{
+  "time": "2026-10-30T02:37:41.751304Z",
+  "kind": "result",
+  "protocol": "chat",
+  "first_event_index": 1,
+  "last_event_index": 2,
+  "object": {
+    "id": "offline",
+    "model": "offline",
+    "created": 1,
+    "choices": {
+      "0": {
+        "index": 0,
+        "role": "",
+        "content": "",
+        "refusal": "无法回答",
+        "finish_reason": "content_filter",
+        "tool_calls": {},
+        "function_call": null
+      }
+    },
+    "usage": null
+  },
+  "status": "complete"
+}

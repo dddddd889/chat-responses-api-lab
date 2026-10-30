@@ -1,0 +1,8 @@
+{
+  "name": "chat-conflicting-tool-id",
+  "source": "offline",
+  "protocol": "chat",
+  "status": "passed",
+  "detail": "expected=sse: invalid chat completion delta actual=sse: invalid chat completion delta: conflicting tool id",
+  "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-conflicting-tool-id/events.jsonl"
+}

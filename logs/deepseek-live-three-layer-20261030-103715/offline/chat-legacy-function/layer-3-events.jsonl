@@ -1,0 +1,2 @@
+{"time":"2026-10-30T02:37:41.751883Z","kind":"event","protocol":"chat","event_index":1,"first_event_index":1,"last_event_index":1,"object":{"type":"choice_done","choice_index":0,"finish_reason":"function_call"}}
+{"time":"2026-10-30T02:37:41.751896Z","kind":"event","protocol":"chat","event_index":2,"first_event_index":1,"last_event_index":2,"object":{"type":"done","status":"complete"}}

@@ -1,0 +1,3 @@
+{"time":"2026-10-30T02:37:34.693093Z","kind":"event","protocol":"responses","event_index":38,"first_event_index":38,"last_event_index":38,"object":{"type":"text_delta","choice_index":0,"item_id":"a8d5c605-6985-4a46-9cef-106e060e4928","delta":"391"}}
+{"time":"2026-10-30T02:37:34.693212Z","kind":"event","protocol":"responses","event_index":42,"first_event_index":42,"last_event_index":42,"object":{"type":"usage","usage":{"input_tokens":41,"output_tokens":30,"total_tokens":71,"input_tokens_details":{"cached_tokens":0},"output_tokens_details":{"reasoning_tokens":28}}}}
+{"time":"2026-10-30T02:37:34.693229Z","kind":"event","protocol":"responses","event_index":42,"first_event_index":1,"last_event_index":42,"object":{"type":"done","status":"complete"}}

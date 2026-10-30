@@ -1,0 +1,40 @@
+{
+  "time": "2026-10-30T02:37:30.440786Z",
+  "kind": "result",
+  "protocol": "responses",
+  "first_event_index": 1,
+  "last_event_index": 24,
+  "object": {
+    "id": "edc8e0e5-217f-425a-b5e2-68e337d7b7e1",
+    "status": "completed",
+    "model": "deepseek-flash",
+    "output": [
+      {
+        "id": "cc18aded-9154-4640-99ee-24901bba9ca5",
+        "type": "message",
+        "status": "completed",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "output_text",
+            "text": "你好，世界 😀\n路径 C:\\temp\\demo，引用\"hello\"。"
+          }
+        ]
+      }
+    ],
+    "usage": {
+      "input_tokens": 35,
+      "output_tokens": 17,
+      "total_tokens": 52,
+      "input_tokens_details": {
+        "cached_tokens": 0
+      },
+      "output_tokens_details": {
+        "reasoning_tokens": 0
+      }
+    },
+    "error": null,
+    "incomplete_details": null
+  },
+  "status": "complete"
+}

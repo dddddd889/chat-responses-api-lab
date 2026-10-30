@@ -1,0 +1,1 @@
+{"time":"2026-10-30T02:37:41.756128Z","kind":"sse","protocol":"responses","event_index":1,"event":"response.failed","object":{"response":{"id":"offline","status":"failed","output":[],"error":{"message":"simulated","code":"server_error"}},"sequence_number":0,"type":"response.failed"}}

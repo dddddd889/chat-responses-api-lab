@@ -1,0 +1,26 @@
+{
+  "time": "2026-10-30T02:37:41.748855Z",
+  "kind": "result",
+  "protocol": "chat",
+  "first_event_index": 1,
+  "last_event_index": 2,
+  "object": {
+    "id": "offline",
+    "model": "offline",
+    "created": 1,
+    "choices": {
+      "0": {
+        "index": 0,
+        "role": "",
+        "content": "half",
+        "refusal": "",
+        "finish_reason": null,
+        "tool_calls": {},
+        "function_call": null
+      }
+    },
+    "usage": null
+  },
+  "status": "partial",
+  "error": "sse: incomplete chat completion: choice 0 missing finish_reason"
+}

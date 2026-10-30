@@ -1,0 +1,2 @@
+{"time":"2026-10-30T02:37:41.750998Z","kind":"sse","protocol":"chat","event_index":1,"event":"message","object":{"id":"offline","model":"offline","created":1,"object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":""},"finish_reason":"stop"}]}}
+{"time":"2026-10-30T02:37:41.751016Z","kind":"sse","protocol":"chat","event_index":2,"event":"message","data":"[DONE]"}

@@ -1,0 +1,43 @@
+{
+  "id": "7c6f03cd-efde-491c-889d-dac29d19eff6",
+  "status": "completed",
+  "model": "deepseek-flash",
+  "output": [
+    {
+      "id": "3ea2f3ee-6035-460b-8459-d82f0bb11b6a",
+      "type": "reasoning",
+      "status": "completed",
+      "content": [
+        {
+          "type": "reasoning_text",
+          "text": "We need answer compute 17*23. 17*20=340, +51=391. Only final number. No extra."
+        }
+      ]
+    },
+    {
+      "id": "a8d5c605-6985-4a46-9cef-106e060e4928",
+      "type": "message",
+      "status": "completed",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "391"
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "input_tokens": 41,
+    "output_tokens": 30,
+    "total_tokens": 71,
+    "input_tokens_details": {
+      "cached_tokens": 0
+    },
+    "output_tokens_details": {
+      "reasoning_tokens": 28
+    }
+  },
+  "error": null,
+  "incomplete_details": null
+}

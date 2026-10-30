@@ -1,0 +1,4 @@
+{"time":"2026-10-30T02:37:41.759675Z","kind":"event","protocol":"responses","event_index":1,"first_event_index":1,"last_event_index":1,"object":{"type":"tool_start","choice_index":0,"tool_index":0,"item_id":"fc","call_id":"call","name":"f"}}
+{"time":"2026-10-30T02:37:41.759684Z","kind":"event","protocol":"responses","event_index":2,"first_event_index":2,"last_event_index":2,"object":{"type":"tool_arguments_delta","choice_index":0,"tool_index":0,"item_id":"fc","call_id":"call","name":"f","delta":"{"}}
+{"time":"2026-10-30T02:37:41.759699Z","kind":"event","protocol":"responses","event_index":4,"first_event_index":1,"last_event_index":4,"object":{"type":"tool_done","choice_index":0,"tool_index":0,"item_id":"fc","call_id":"call","name":"f","arguments":"{\"a\":1}","status":"complete"}}
+{"time":"2026-10-30T02:37:41.759702Z","kind":"event","protocol":"responses","event_index":4,"first_event_index":1,"last_event_index":4,"object":{"type":"done","status":"complete"}}

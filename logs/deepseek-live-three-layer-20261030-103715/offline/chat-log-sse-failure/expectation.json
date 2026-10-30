@@ -1,0 +1,8 @@
+{
+  "name": "chat-log-sse-failure",
+  "source": "offline",
+  "protocol": "chat",
+  "status": "passed",
+  "detail": "expected=sse: stream log write failed actual=sse: stream log write failed: permission denied",
+  "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-log-sse-failure/events.jsonl"
+}

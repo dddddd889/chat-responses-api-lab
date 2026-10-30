@@ -1,0 +1,28 @@
+{
+  "time": "2026-10-30T02:37:41.751901Z",
+  "kind": "result",
+  "protocol": "chat",
+  "first_event_index": 1,
+  "last_event_index": 2,
+  "object": {
+    "id": "offline",
+    "model": "offline",
+    "created": 1,
+    "choices": {
+      "0": {
+        "index": 0,
+        "role": "",
+        "content": "",
+        "refusal": "",
+        "finish_reason": "function_call",
+        "tool_calls": {},
+        "function_call": {
+          "name": "old",
+          "arguments": "{}"
+        }
+      }
+    },
+    "usage": null
+  },
+  "status": "complete"
+}

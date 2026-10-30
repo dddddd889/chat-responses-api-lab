@@ -1,0 +1,27 @@
+{
+  "id": "ff40e6d5-28c2-4c6a-81f7-3eee6724c26e",
+  "model": "deepseek-flash",
+  "created": 1793327849,
+  "choices": {
+    "0": {
+      "index": 0,
+      "role": "assistant",
+      "content": "391",
+      "refusal": "",
+      "finish_reason": "stop",
+      "tool_calls": {},
+      "function_call": null
+    }
+  },
+  "usage": {
+    "prompt_tokens": 41,
+    "completion_tokens": 23,
+    "total_tokens": 64,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 21
+    }
+  }
+}

@@ -1,0 +1,434 @@
+[
+  {
+    "name": "chat-valid",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=\u003cnil\u003e actual=\u003cnil\u003e",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-valid/events.jsonl"
+  },
+  {
+    "name": "chat-no-done",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=unexpected EOF actual=chat completions: missing [DONE]: unexpected EOF",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-no-done/events.jsonl"
+  },
+  {
+    "name": "chat-partial-frame",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=unexpected EOF actual=unexpected EOF",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-partial-frame/events.jsonl"
+  },
+  {
+    "name": "chat-invalid-json",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=sse: invalid chat completion chunk actual=sse: invalid chat completion chunk: invalid character 'b' looking for beginning of object key string",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-invalid-json/events.jsonl"
+  },
+  {
+    "name": "chat-missing-choice-index",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=sse: invalid chat completion chunk actual=sse: invalid chat completion chunk: sse: invalid chat completion chunk: choice index must be a non-negative integer",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-missing-choice-index/events.jsonl"
+  },
+  {
+    "name": "chat-null-choice-index",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=sse: invalid chat completion chunk actual=sse: invalid chat completion chunk: sse: invalid chat completion chunk: choice index must be a non-negative integer",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-null-choice-index/events.jsonl"
+  },
+  {
+    "name": "chat-negative-index",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=sse: invalid chat completion chunk actual=sse: invalid chat completion chunk: sse: invalid chat completion chunk: choice index must be a non-negative integer",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-negative-index/events.jsonl"
+  },
+  {
+    "name": "chat-missing-tool-index",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=sse: invalid chat completion chunk actual=sse: invalid chat completion chunk: sse: invalid chat completion chunk: tool index must be a non-negative integer",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-missing-tool-index/events.jsonl"
+  },
+  {
+    "name": "chat-done-only",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=sse: incomplete chat completion actual=sse: incomplete chat completion: no choices received",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-done-only/events.jsonl"
+  },
+  {
+    "name": "chat-no-finish",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=sse: incomplete chat completion actual=sse: incomplete chat completion: choice 0 missing finish_reason",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-no-finish/events.jsonl"
+  },
+  {
+    "name": "chat-incomplete-tool",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=sse: incomplete chat completion actual=sse: incomplete chat completion: choice 0 tool 0 missing id/type/name/arguments",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-incomplete-tool/events.jsonl"
+  },
+  {
+    "name": "chat-after-finish",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=sse: invalid chat completion delta actual=sse: invalid chat completion delta: choice 0 received content after finish",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-after-finish/events.jsonl"
+  },
+  {
+    "name": "chat-duplicate-choice",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=sse: invalid chat completion delta actual=sse: invalid chat completion delta: duplicate choice index 0",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-duplicate-choice/events.jsonl"
+  },
+  {
+    "name": "chat-total-budget",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=sse: accumulated chat exceeds size limit actual=sse: accumulated chat exceeds size limit",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-total-budget/events.jsonl"
+  },
+  {
+    "name": "chat-line-limit",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=sse: line exceeds size limit actual=sse: line exceeds size limit",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-line-limit/events.jsonl"
+  },
+  {
+    "name": "chat-event-limit",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=sse: event exceeds size limit actual=sse: event exceeds size limit",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-event-limit/events.jsonl"
+  },
+  {
+    "name": "chat-multiple-choices-tools",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=\u003cnil\u003e actual=\u003cnil\u003e",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-multiple-choices-tools/events.jsonl"
+  },
+  {
+    "name": "chat-empty-text",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=\u003cnil\u003e actual=\u003cnil\u003e",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-empty-text/events.jsonl"
+  },
+  {
+    "name": "chat-refusal",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=\u003cnil\u003e actual=\u003cnil\u003e",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-refusal/events.jsonl"
+  },
+  {
+    "name": "chat-length",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=\u003cnil\u003e actual=\u003cnil\u003e",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-length/events.jsonl"
+  },
+  {
+    "name": "chat-legacy-function",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=\u003cnil\u003e actual=\u003cnil\u003e",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-legacy-function/events.jsonl"
+  },
+  {
+    "name": "chat-over-64k",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=\u003cnil\u003e actual=\u003cnil\u003e",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-over-64k/events.jsonl"
+  },
+  {
+    "name": "chat-invalid-utf8",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=sse: invalid UTF-8 actual=sse: invalid UTF-8",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-invalid-utf8/events.jsonl"
+  },
+  {
+    "name": "chat-conflicting-tool-id",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=sse: invalid chat completion delta actual=sse: invalid chat completion delta: conflicting tool id",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-conflicting-tool-id/events.jsonl"
+  },
+  {
+    "name": "chat-unknown-finish",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=sse: incomplete chat completion actual=sse: incomplete chat completion: choice 0 invalid finish_reason \"unknown\"",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-unknown-finish/events.jsonl"
+  },
+  {
+    "name": "responses-valid",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=\u003cnil\u003e actual=\u003cnil\u003e",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-valid/events.jsonl"
+  },
+  {
+    "name": "responses-no-terminal",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=unexpected EOF actual=responses: missing terminal event: unexpected EOF",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-no-terminal/events.jsonl"
+  },
+  {
+    "name": "responses-incomplete",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=sse: response incomplete actual=sse: response incomplete: response.incomplete",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-incomplete/events.jsonl"
+  },
+  {
+    "name": "responses-failed",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=sse: response failed actual=sse: response failed: response.failed",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-failed/events.jsonl"
+  },
+  {
+    "name": "responses-invalid-json",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=sse: invalid response event actual=sse: invalid response event: invalid character 'b' looking for beginning of object key string",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-invalid-json/events.jsonl"
+  },
+  {
+    "name": "responses-wrong-terminator",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=sse: invalid response event actual=sse: invalid response event: invalid character 'D' looking for beginning of value",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-wrong-terminator/events.jsonl"
+  },
+  {
+    "name": "responses-missing-index",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=sse: invalid response event actual=sse: invalid response event: response.output_text.delta: missing output index or item id",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-missing-index/events.jsonl"
+  },
+  {
+    "name": "responses-no-sequence",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=sse: invalid response event actual=sse: invalid response event: missing or non-increasing sequence_number",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-no-sequence/events.jsonl"
+  },
+  {
+    "name": "responses-repeated-sequence",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=sse: invalid response event actual=sse: invalid response event: missing or non-increasing sequence_number",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-repeated-sequence/events.jsonl"
+  },
+  {
+    "name": "responses-event-mismatch",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=sse: invalid response event actual=sse: invalid response event: event type mismatch or missing type",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-event-mismatch/events.jsonl"
+  },
+  {
+    "name": "responses-unknown-event",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=\u003cnil\u003e actual=\u003cnil\u003e",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-unknown-event/events.jsonl"
+  },
+  {
+    "name": "responses-total-budget",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=sse: response stream exceeds size limit actual=sse: response stream exceeds size limit",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-total-budget/events.jsonl"
+  },
+  {
+    "name": "responses-missing-content-index",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=sse: invalid response event actual=sse: invalid response event: response.output_text.delta: missing content index",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-missing-content-index/events.jsonl"
+  },
+  {
+    "name": "responses-completed-wrong-status",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=sse: invalid response event actual=sse: invalid response event: response.completed: response status mismatch",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-completed-wrong-status/events.jsonl"
+  },
+  {
+    "name": "responses-unknown-item",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=sse: invalid response event actual=sse: invalid response event: delta references unknown item",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-unknown-item/events.jsonl"
+  },
+  {
+    "name": "responses-empty-output",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=\u003cnil\u003e actual=\u003cnil\u003e",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-empty-output/events.jsonl"
+  },
+  {
+    "name": "responses-function-done-replacement",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=\u003cnil\u003e actual=\u003cnil\u003e",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-function-done-replacement/events.jsonl"
+  },
+  {
+    "name": "chat-crlf",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=\u003cnil\u003e actual=\u003cnil\u003e",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-crlf/events.jsonl"
+  },
+  {
+    "name": "chat-cr",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=\u003cnil\u003e actual=\u003cnil\u003e",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-cr/events.jsonl"
+  },
+  {
+    "name": "chat-log-raw-failure",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=sse: stream log write failed actual=sse: stream log write failed: permission denied",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-log-raw-failure/events.jsonl"
+  },
+  {
+    "name": "chat-log-sse-failure",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=sse: stream log write failed actual=sse: stream log write failed: permission denied",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-log-sse-failure/events.jsonl"
+  },
+  {
+    "name": "chat-log-event-failure",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=sse: stream log write failed actual=sse: stream log write failed: permission denied; logging result: sse: stream log write failed: permission denied",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-log-event-failure/events.jsonl"
+  },
+  {
+    "name": "chat-log-result-failure",
+    "source": "offline",
+    "protocol": "chat",
+    "status": "passed",
+    "detail": "expected=sse: stream log write failed actual=sse: stream log write failed: permission denied",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-log-result-failure/events.jsonl"
+  },
+  {
+    "name": "responses-crlf",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=\u003cnil\u003e actual=\u003cnil\u003e",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-crlf/events.jsonl"
+  },
+  {
+    "name": "responses-cr",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=\u003cnil\u003e actual=\u003cnil\u003e",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-cr/events.jsonl"
+  },
+  {
+    "name": "responses-log-raw-failure",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=sse: stream log write failed actual=sse: stream log write failed: permission denied",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-log-raw-failure/events.jsonl"
+  },
+  {
+    "name": "responses-log-sse-failure",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=sse: stream log write failed actual=sse: stream log write failed: permission denied",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-log-sse-failure/events.jsonl"
+  },
+  {
+    "name": "responses-log-event-failure",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=sse: stream log write failed actual=sse: stream log write failed: permission denied; logging result: sse: stream log write failed: permission denied",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-log-event-failure/events.jsonl"
+  },
+  {
+    "name": "responses-log-result-failure",
+    "source": "offline",
+    "protocol": "responses",
+    "status": "passed",
+    "detail": "expected=sse: stream log write failed actual=sse: stream log write failed: permission denied",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-log-result-failure/events.jsonl"
+  }
+]

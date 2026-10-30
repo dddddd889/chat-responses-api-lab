@@ -1,0 +1,8 @@
+{
+  "name": "chat-length",
+  "source": "offline",
+  "protocol": "chat",
+  "status": "passed",
+  "detail": "expected=\u003cnil\u003e actual=\u003cnil\u003e",
+  "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-length/events.jsonl"
+}

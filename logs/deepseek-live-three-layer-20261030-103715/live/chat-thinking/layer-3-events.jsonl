@@ -1,0 +1,4 @@
+{"time":"2026-10-30T02:37:29.772327Z","kind":"event","protocol":"chat","event_index":23,"first_event_index":23,"last_event_index":23,"object":{"type":"text_delta","choice_index":0,"delta":"391"}}
+{"time":"2026-10-30T02:37:29.774478Z","kind":"event","protocol":"chat","event_index":24,"first_event_index":24,"last_event_index":24,"object":{"type":"choice_done","choice_index":0,"finish_reason":"stop"}}
+{"time":"2026-10-30T02:37:29.774491Z","kind":"event","protocol":"chat","event_index":24,"first_event_index":24,"last_event_index":24,"object":{"type":"usage","usage":{"input_tokens":41,"output_tokens":23,"total_tokens":64,"input_tokens_details":{"cached_tokens":0},"output_tokens_details":{"reasoning_tokens":21}}}}
+{"time":"2026-10-30T02:37:29.774513Z","kind":"event","protocol":"chat","event_index":25,"first_event_index":1,"last_event_index":25,"object":{"type":"done","status":"complete"}}

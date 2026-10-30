@@ -1,0 +1,3 @@
+event:response.failed
+data:{"response":{"id":"offline","status":"failed","output":[],"error":{"message":"simulated","code":"server_error"}},"sequence_number":0,"type":"response.failed"}
+

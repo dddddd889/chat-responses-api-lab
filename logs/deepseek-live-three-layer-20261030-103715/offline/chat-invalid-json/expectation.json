@@ -1,0 +1,8 @@
+{
+  "name": "chat-invalid-json",
+  "source": "offline",
+  "protocol": "chat",
+  "status": "passed",
+  "detail": "expected=sse: invalid chat completion chunk actual=sse: invalid chat completion chunk: invalid character 'b' looking for beginning of object key string",
+  "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-invalid-json/events.jsonl"
+}

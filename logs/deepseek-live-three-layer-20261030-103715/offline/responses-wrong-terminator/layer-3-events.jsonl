@@ -1,0 +1,1 @@
+{"time":"2026-10-30T02:37:41.756696Z","kind":"event","protocol":"responses","event_index":1,"first_event_index":1,"last_event_index":1,"object":{"type":"error","status":"partial","error":"sse: invalid response event: invalid character 'D' looking for beginning of value"}}

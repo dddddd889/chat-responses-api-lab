@@ -1,0 +1,17 @@
+{
+  "id": "offline",
+  "model": "offline",
+  "created": 1,
+  "choices": {
+    "0": {
+      "index": 0,
+      "role": "",
+      "content": "你好😀",
+      "refusal": "",
+      "finish_reason": "stop",
+      "tool_calls": {},
+      "function_call": null
+    }
+  },
+  "usage": null
+}

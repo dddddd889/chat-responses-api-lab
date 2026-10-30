@@ -1,0 +1,3 @@
+{"time":"2026-10-30T02:37:41.749084Z","kind":"event","protocol":"chat","event_index":1,"first_event_index":1,"last_event_index":1,"object":{"type":"tool_start","choice_index":0,"tool_index":0}}
+{"time":"2026-10-30T02:37:41.749087Z","kind":"event","protocol":"chat","event_index":1,"first_event_index":1,"last_event_index":1,"object":{"type":"choice_done","choice_index":0,"finish_reason":"tool_calls"}}
+{"time":"2026-10-30T02:37:41.749095Z","kind":"event","protocol":"chat","event_index":2,"first_event_index":1,"last_event_index":2,"object":{"type":"error","status":"partial","error":"sse: incomplete chat completion: choice 0 tool 0 missing id/type/name/arguments"}}

@@ -1,0 +1,8 @@
+{
+  "name": "chat-no-finish",
+  "source": "offline",
+  "protocol": "chat",
+  "status": "passed",
+  "detail": "expected=sse: incomplete chat completion actual=sse: incomplete chat completion: choice 0 missing finish_reason",
+  "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-no-finish/events.jsonl"
+}

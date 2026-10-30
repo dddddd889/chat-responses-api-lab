@@ -1,0 +1,2 @@
+{"time":"2026-10-30T02:37:41.750076Z","kind":"event","protocol":"chat","object":{"type":"error","status":"partial","error":"sse: line exceeds size limit"}}
+{"time":"2026-10-30T02:37:41.750087Z","kind":"result","protocol":"chat","object":{"id":"","model":"","created":0,"choices":{},"usage":null},"status":"partial","error":"sse: line exceeds size limit"}

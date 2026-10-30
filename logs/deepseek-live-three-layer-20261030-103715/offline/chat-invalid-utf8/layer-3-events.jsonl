@@ -1,0 +1,1 @@
+{"time":"2026-10-30T02:37:41.754117Z","kind":"event","protocol":"chat","object":{"type":"error","status":"partial","error":"sse: invalid UTF-8"}}

@@ -1,0 +1,1 @@
+{"time":"2026-10-30T02:37:41.757454Z","kind":"event","protocol":"responses","event_index":2,"first_event_index":1,"last_event_index":2,"object":{"type":"error","status":"partial","error":"sse: invalid response event: missing or non-increasing sequence_number"}}

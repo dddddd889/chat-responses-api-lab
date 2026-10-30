@@ -1,0 +1,8 @@
+{
+  "name": "responses-no-terminal",
+  "source": "offline",
+  "protocol": "responses",
+  "status": "passed",
+  "detail": "expected=unexpected EOF actual=responses: missing terminal event: unexpected EOF",
+  "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-no-terminal/events.jsonl"
+}

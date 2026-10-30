@@ -1,0 +1,8 @@
+{
+  "name": "chat-null-choice-index",
+  "source": "offline",
+  "protocol": "chat",
+  "status": "passed",
+  "detail": "expected=sse: invalid chat completion chunk actual=sse: invalid chat completion chunk: sse: invalid chat completion chunk: choice index must be a non-negative integer",
+  "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-null-choice-index/events.jsonl"
+}

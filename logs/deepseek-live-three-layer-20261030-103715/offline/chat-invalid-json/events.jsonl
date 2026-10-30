@@ -1,0 +1,3 @@
+{"time":"2026-10-30T02:37:41.747542Z","kind":"sse","protocol":"chat","event_index":1,"event":"message","data":"{bad}"}
+{"time":"2026-10-30T02:37:41.747551Z","kind":"event","protocol":"chat","event_index":1,"first_event_index":1,"last_event_index":1,"object":{"type":"error","status":"partial","error":"sse: invalid chat completion chunk: invalid character 'b' looking for beginning of object key string"}}
+{"time":"2026-10-30T02:37:41.747554Z","kind":"result","protocol":"chat","first_event_index":1,"last_event_index":1,"object":{"id":"","model":"","created":0,"choices":{},"usage":null},"status":"partial","error":"sse: invalid chat completion chunk: invalid character 'b' looking for beginning of object key string"}

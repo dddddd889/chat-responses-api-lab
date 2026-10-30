@@ -1,0 +1,2 @@
+{"time":"2026-10-30T02:37:41.763136Z","kind":"event","protocol":"responses","event_index":1,"first_event_index":1,"last_event_index":1,"object":{"type":"usage","usage":{"input_tokens":1,"output_tokens":2,"total_tokens":3}}}
+{"time":"2026-10-30T02:37:41.763139Z","kind":"event","protocol":"responses","event_index":1,"first_event_index":1,"last_event_index":1,"object":{"type":"done","status":"complete"}}

@@ -1,0 +1,20 @@
+{
+  "time": "2026-10-30T02:37:41.75586Z",
+  "kind": "result",
+  "protocol": "responses",
+  "first_event_index": 1,
+  "last_event_index": 1,
+  "object": {
+    "id": "offline",
+    "status": "incomplete",
+    "model": "",
+    "output": [],
+    "usage": null,
+    "error": null,
+    "incomplete_details": {
+      "reason": "max_output_tokens"
+    }
+  },
+  "status": "partial",
+  "error": "sse: response incomplete: response.incomplete"
+}

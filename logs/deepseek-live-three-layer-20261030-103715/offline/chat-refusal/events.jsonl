@@ -1,0 +1,6 @@
+{"time":"2026-10-30T02:37:41.751277Z","kind":"sse","protocol":"chat","event_index":1,"event":"message","object":{"id":"offline","model":"offline","created":1,"object":"chat.completion.chunk","choices":[{"index":0,"delta":{"refusal":"无法回答"},"finish_reason":"content_filter"}]}}
+{"time":"2026-10-30T02:37:41.751288Z","kind":"event","protocol":"chat","event_index":1,"first_event_index":1,"last_event_index":1,"object":{"type":"refusal_delta","choice_index":0,"delta":"无法回答"}}
+{"time":"2026-10-30T02:37:41.751293Z","kind":"event","protocol":"chat","event_index":1,"first_event_index":1,"last_event_index":1,"object":{"type":"choice_done","choice_index":0,"finish_reason":"content_filter"}}
+{"time":"2026-10-30T02:37:41.751297Z","kind":"sse","protocol":"chat","event_index":2,"event":"message","data":"[DONE]"}
+{"time":"2026-10-30T02:37:41.7513Z","kind":"event","protocol":"chat","event_index":2,"first_event_index":1,"last_event_index":2,"object":{"type":"done","status":"complete"}}
+{"time":"2026-10-30T02:37:41.751304Z","kind":"result","protocol":"chat","first_event_index":1,"last_event_index":2,"object":{"id":"offline","model":"offline","created":1,"choices":{"0":{"index":0,"role":"","content":"","refusal":"无法回答","finish_reason":"content_filter","tool_calls":{},"function_call":null}},"usage":null},"status":"complete"}

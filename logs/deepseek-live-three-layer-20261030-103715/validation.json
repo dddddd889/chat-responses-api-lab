@@ -1,0 +1,1061 @@
+{
+  "checked_at": "2026-10-30T10:38:59.183859+08:00",
+  "new_live_requests": 14,
+  "live_passed": 14,
+  "live_total_tokens": 1815,
+  "offline_passed": 54,
+  "previous_files_unchanged": 1092,
+  "credential_leaks": 0,
+  "cases": [
+    {
+      "name": "chat-text",
+      "source": "live",
+      "record_counts": {
+        "sse": 19,
+        "event": 19,
+        "result": 1
+      },
+      "status": "verified",
+      "result_equal": true,
+      "usage_equal": true,
+      "tool_arguments_equal": true,
+      "replay_equal": true,
+      "business_types": {
+        "text_delta": 16,
+        "choice_done": 1,
+        "usage": 1,
+        "done": 1
+      }
+    },
+    {
+      "name": "chat-json",
+      "source": "live",
+      "record_counts": {
+        "sse": 20,
+        "event": 20,
+        "result": 1
+      },
+      "status": "verified",
+      "result_equal": true,
+      "usage_equal": true,
+      "tool_arguments_equal": true,
+      "replay_equal": true,
+      "business_types": {
+        "text_delta": 17,
+        "choice_done": 1,
+        "usage": 1,
+        "done": 1
+      }
+    },
+    {
+      "name": "chat-tool",
+      "source": "live",
+      "record_counts": {
+        "sse": 11,
+        "event": 12,
+        "result": 1
+      },
+      "status": "verified",
+      "result_equal": true,
+      "usage_equal": true,
+      "tool_arguments_equal": true,
+      "replay_equal": true,
+      "business_types": {
+        "tool_start": 1,
+        "tool_arguments_delta": 7,
+        "tool_done": 1,
+        "choice_done": 1,
+        "usage": 1,
+        "done": 1
+      }
+    },
+    {
+      "name": "chat-multi_tool",
+      "source": "live",
+      "record_counts": {
+        "sse": 19,
+        "event": 21,
+        "result": 1
+      },
+      "status": "verified",
+      "result_equal": true,
+      "usage_equal": true,
+      "tool_arguments_equal": true,
+      "replay_equal": true,
+      "business_types": {
+        "tool_start": 2,
+        "tool_arguments_delta": 14,
+        "tool_done": 2,
+        "choice_done": 1,
+        "usage": 1,
+        "done": 1
+      }
+    },
+    {
+      "name": "chat-length",
+      "source": "live",
+      "record_counts": {
+        "sse": 19,
+        "event": 19,
+        "result": 1
+      },
+      "status": "verified",
+      "result_equal": true,
+      "usage_equal": true,
+      "tool_arguments_equal": true,
+      "replay_equal": true,
+      "business_types": {
+        "text_delta": 16,
+        "choice_done": 1,
+        "usage": 1,
+        "done": 1
+      }
+    },
+    {
+      "name": "chat-thinking",
+      "source": "live",
+      "record_counts": {
+        "sse": 25,
+        "event": 4,
+        "result": 1
+      },
+      "status": "verified",
+      "result_equal": true,
+      "usage_equal": true,
+      "tool_arguments_equal": true,
+      "replay_equal": true,
+      "business_types": {
+        "text_delta": 1,
+        "choice_done": 1,
+        "usage": 1,
+        "done": 1
+      }
+    },
+    {
+      "name": "chat-http_error",
+      "source": "live",
+      "record_counts": {
+        "http_error": 1
+      },
+      "layers": "not_applicable_http_error"
+    },
+    {
+      "name": "responses-text",
+      "source": "live",
+      "record_counts": {
+        "sse": 24,
+        "event": 18,
+        "result": 1
+      },
+      "status": "verified",
+      "result_equal": true,
+      "usage_equal": true,
+      "tool_arguments_equal": true,
+      "replay_equal": true,
+      "business_types": {
+        "text_delta": 16,
+        "usage": 1,
+        "done": 1
+      }
+    },
+    {
+      "name": "responses-json",
+      "source": "live",
+      "record_counts": {
+        "sse": 25,
+        "event": 19,
+        "result": 1
+      },
+      "status": "verified",
+      "result_equal": true,
+      "usage_equal": true,
+      "tool_arguments_equal": true,
+      "replay_equal": true,
+      "business_types": {
+        "text_delta": 17,
+        "usage": 1,
+        "done": 1
+      }
+    },
+    {
+      "name": "responses-tool",
+      "source": "live",
+      "record_counts": {
+        "sse": 13,
+        "event": 11,
+        "result": 1
+      },
+      "status": "verified",
+      "result_equal": true,
+      "usage_equal": true,
+      "tool_arguments_equal": true,
+      "replay_equal": true,
+      "business_types": {
+        "tool_start": 1,
+        "tool_arguments_delta": 7,
+        "tool_done": 1,
+        "usage": 1,
+        "done": 1
+      }
+    },
+    {
+      "name": "responses-multi_tool",
+      "source": "live",
+      "record_counts": {
+        "sse": 23,
+        "event": 20,
+        "result": 1
+      },
+      "status": "verified",
+      "result_equal": true,
+      "usage_equal": true,
+      "tool_arguments_equal": true,
+      "replay_equal": true,
+      "business_types": {
+        "tool_start": 2,
+        "tool_arguments_delta": 14,
+        "tool_done": 2,
+        "usage": 1,
+        "done": 1
+      }
+    },
+    {
+      "name": "responses-length",
+      "source": "live",
+      "record_counts": {
+        "sse": 24,
+        "event": 18,
+        "result": 1
+      },
+      "status": "verified",
+      "result_equal": true,
+      "usage_equal": true,
+      "tool_arguments_equal": true,
+      "replay_equal": true,
+      "business_types": {
+        "text_delta": 16,
+        "usage": 1,
+        "error": 1
+      }
+    },
+    {
+      "name": "responses-thinking",
+      "source": "live",
+      "record_counts": {
+        "sse": 42,
+        "event": 3,
+        "result": 1
+      },
+      "status": "verified",
+      "result_equal": true,
+      "usage_equal": true,
+      "tool_arguments_equal": true,
+      "replay_equal": true,
+      "business_types": {
+        "text_delta": 1,
+        "usage": 1,
+        "done": 1
+      }
+    },
+    {
+      "name": "responses-http_error",
+      "source": "live",
+      "record_counts": {
+        "http_error": 1
+      },
+      "layers": "not_applicable_http_error"
+    },
+    {
+      "name": "chat-valid",
+      "source": "offline",
+      "record_counts": {
+        "sse": 2,
+        "event": 3,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 2,
+        "result_records": 1,
+        "business_records": 3
+      }
+    },
+    {
+      "name": "chat-no-done",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 3,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 3
+      }
+    },
+    {
+      "name": "chat-partial-frame",
+      "source": "offline",
+      "record_counts": {
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 0,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "chat-invalid-json",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "chat-missing-choice-index",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "chat-null-choice-index",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "chat-negative-index",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "chat-missing-tool-index",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "chat-done-only",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "chat-no-finish",
+      "source": "offline",
+      "record_counts": {
+        "sse": 2,
+        "event": 2,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 2,
+        "result_records": 1,
+        "business_records": 2
+      }
+    },
+    {
+      "name": "chat-incomplete-tool",
+      "source": "offline",
+      "record_counts": {
+        "sse": 2,
+        "event": 3,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 2,
+        "result_records": 1,
+        "business_records": 3
+      }
+    },
+    {
+      "name": "chat-after-finish",
+      "source": "offline",
+      "record_counts": {
+        "sse": 2,
+        "event": 3,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 2,
+        "result_records": 1,
+        "business_records": 3
+      }
+    },
+    {
+      "name": "chat-duplicate-choice",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "chat-total-budget",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "chat-line-limit",
+      "source": "offline",
+      "record_counts": {
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 0,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "chat-event-limit",
+      "source": "offline",
+      "record_counts": {
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 0,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "chat-multiple-choices-tools",
+      "source": "offline",
+      "record_counts": {
+        "sse": 3,
+        "event": 15,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 3,
+        "result_records": 1,
+        "business_records": 15
+      }
+    },
+    {
+      "name": "chat-empty-text",
+      "source": "offline",
+      "record_counts": {
+        "sse": 2,
+        "event": 2,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 2,
+        "result_records": 1,
+        "business_records": 2
+      }
+    },
+    {
+      "name": "chat-refusal",
+      "source": "offline",
+      "record_counts": {
+        "sse": 2,
+        "event": 3,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 2,
+        "result_records": 1,
+        "business_records": 3
+      }
+    },
+    {
+      "name": "chat-length",
+      "source": "offline",
+      "record_counts": {
+        "sse": 2,
+        "event": 3,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 2,
+        "result_records": 1,
+        "business_records": 3
+      }
+    },
+    {
+      "name": "chat-legacy-function",
+      "source": "offline",
+      "record_counts": {
+        "sse": 2,
+        "event": 2,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 2,
+        "result_records": 1,
+        "business_records": 2
+      }
+    },
+    {
+      "name": "chat-over-64k",
+      "source": "offline",
+      "record_counts": {
+        "sse": 2,
+        "event": 3,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 2,
+        "result_records": 1,
+        "business_records": 3
+      }
+    },
+    {
+      "name": "chat-invalid-utf8",
+      "source": "offline",
+      "record_counts": {
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 0,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "chat-conflicting-tool-id",
+      "source": "offline",
+      "record_counts": {
+        "sse": 2,
+        "event": 2,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 2,
+        "result_records": 1,
+        "business_records": 2
+      }
+    },
+    {
+      "name": "chat-unknown-finish",
+      "source": "offline",
+      "record_counts": {
+        "sse": 2,
+        "event": 2,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 2,
+        "result_records": 1,
+        "business_records": 2
+      }
+    },
+    {
+      "name": "responses-valid",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 2,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 2
+      }
+    },
+    {
+      "name": "responses-no-terminal",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "responses-incomplete",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "responses-failed",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "responses-invalid-json",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "responses-wrong-terminator",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "responses-missing-index",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "responses-no-sequence",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "responses-repeated-sequence",
+      "source": "offline",
+      "record_counts": {
+        "sse": 2,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 2,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "responses-event-mismatch",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "responses-unknown-event",
+      "source": "offline",
+      "record_counts": {
+        "sse": 2,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 2,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "responses-total-budget",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "responses-missing-content-index",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "responses-completed-wrong-status",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "responses-unknown-item",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "responses-empty-output",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "responses-function-done-replacement",
+      "source": "offline",
+      "record_counts": {
+        "sse": 4,
+        "event": 4,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 4,
+        "result_records": 1,
+        "business_records": 4
+      }
+    },
+    {
+      "name": "chat-crlf",
+      "source": "offline",
+      "record_counts": {
+        "sse": 2,
+        "event": 3,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 2,
+        "result_records": 1,
+        "business_records": 3
+      }
+    },
+    {
+      "name": "chat-cr",
+      "source": "offline",
+      "record_counts": {
+        "sse": 2,
+        "event": 3,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 2,
+        "result_records": 1,
+        "business_records": 3
+      }
+    },
+    {
+      "name": "chat-log-raw-failure",
+      "source": "offline",
+      "record_counts": {},
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 0,
+        "result_records": 0,
+        "business_records": 0
+      }
+    },
+    {
+      "name": "chat-log-sse-failure",
+      "source": "offline",
+      "record_counts": {
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 0,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "chat-log-event-failure",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 0
+      }
+    },
+    {
+      "name": "chat-log-result-failure",
+      "source": "offline",
+      "record_counts": {
+        "sse": 2,
+        "event": 3
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 2,
+        "result_records": 0,
+        "business_records": 3
+      }
+    },
+    {
+      "name": "responses-crlf",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 2,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 2
+      }
+    },
+    {
+      "name": "responses-cr",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 2,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 2
+      }
+    },
+    {
+      "name": "responses-log-raw-failure",
+      "source": "offline",
+      "record_counts": {},
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 0,
+        "result_records": 0,
+        "business_records": 0
+      }
+    },
+    {
+      "name": "responses-log-sse-failure",
+      "source": "offline",
+      "record_counts": {
+        "event": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 0,
+        "result_records": 1,
+        "business_records": 1
+      }
+    },
+    {
+      "name": "responses-log-event-failure",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "result": 1
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 1,
+        "business_records": 0
+      }
+    },
+    {
+      "name": "responses-log-result-failure",
+      "source": "offline",
+      "record_counts": {
+        "sse": 1,
+        "event": 2
+      },
+      "status": "expected_behavior_verified",
+      "layers": {
+        "sse_records": 1,
+        "result_records": 0,
+        "business_records": 2
+      }
+    }
+  ]
+}

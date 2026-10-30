@@ -1,0 +1,56 @@
+# SSE 流观察室
+
+使用已有的 14 个 DeepSeek 真实请求样本，交互查看从 SSE 事件到完整参数、usage 和统一业务事件的过程。所有浏览、回放和下载都在浏览器内执行，不需要密钥，不会调用模型。旧文档和源日志不做修改。
+
+## 打开
+
+直接双击 `dist/index.html`。数据以普通脚本加载，没有 fetch、外部字体或 CDN，断网也可以使用。每个场景有独立页面，例如：
+
+- `dist/scenarios/chat-multi_tool/index.html`
+- `dist/scenarios/responses-multi_tool/index.html`
+
+也可以在当前目录启动静态服务：
+
+```sh
+python3 -m http.server 8765 --bind 127.0.0.1 --directory dist
+```
+
+访问 `http://127.0.0.1:8765/`。整个 `dist/` 可以复制到任意静态托管服务，支持子目录部署，无需路由重写。
+
+## 交互
+
+- 侧栏按接口筛选、搜索场景；右上角切换同一场景的 Chat / Responses 实测页面。
+- 逐步回放支持播放、暂停、速度、单步按钮、进度条，以及焦点不在表单控件时的左右方向键。
+- 第一层展示真实上游 JSON；点击事件查看内容，也可以查看按事件重建的 SSE 帧。重建帧保留语义，不冒充原始网络字节。
+- 第二层的中途状态根据第一层增量计算，用于解释拼接；回放终点采用日志中已记录的合并对象。
+- 第三层展示日志里实际生成的业务事件；点击事件会跳到来源 SSE，并标亮工具开始到完成的序号范围。
+- “协议对照”并排查看同类型的两次独立请求；“完整结果”保留原始接口对象、复制和 JSON 下载。
+- HTTP 400、Chat length、Responses incomplete 分开说明。usage 未到达时显示未知，不显示伪造的零用量。
+
+当前仅把常见文本、拒绝、函数工具和 usage 统一成业务事件；思考等扩展在第一层完整保留。参数即使语法上是合法 JSON，也不代表满足工具业务 schema；页面不会执行工具。
+
+## 重新生成与验证
+
+生成器只读 `../logs/deepseek-live-three-layer-20261030-103715/`，不修改来源文件，不产生 API 调用。
+
+```sh
+python3 build.py
+node --check web/core.js
+node --check web/app.js
+node --test core.test.cjs
+```
+
+`web/` 为页面源码，`build.py` 将静态资源和数据复制到 `dist/`，并生成首页和 14 个独立页面。运行时和这些数据测试均不依赖第三方包。
+
+数据源日期为 2026-10-30，总计 1815 token；页面中的 SSE 序号是本地 event_index。Responses 的 sequence_number 原样显示在上游对象内，两种接口的序号不强行对齐。
+
+## 可选 DOM 交互测试
+
+数据测试只使用 Node 标准库。另有 16 个可选 DOM 测试，验证页面脚本执行、播放暂停、来源联动、标签切换和搜索；测试依赖仅安装在临时目录，不进入静态站点：
+
+```sh
+npm install --prefix /private/tmp/sse-site-dom-test --no-audit --no-fund --ignore-scripts jsdom@26.1.0
+SSE_DOM_MODULE=/private/tmp/sse-site-dom-test/node_modules/jsdom node --test dom.test.cjs
+```
+
+DOM 测试不包含真实浏览器的屏幕和布局验收。当前验证结果见 `verification.json`。离线分发包是 `stream-lab-static.zip`，解压后打开其中的 `index.html`。

@@ -1,0 +1,1 @@
+{"time":"2026-10-30T02:37:41.756938Z","kind":"sse","protocol":"responses","event_index":1,"event":"response.output_text.delta","object":{"content_index":0,"delta":"bad","item_id":"msg","sequence_number":0,"type":"response.output_text.delta"}}

@@ -1,0 +1,1 @@
+{"time":"2026-10-30T02:37:41.755542Z","kind":"sse","protocol":"responses","event_index":1,"event":"response.created","object":{"response":{"id":"offline","status":"in_progress","output":[]},"sequence_number":0,"type":"response.created"}}

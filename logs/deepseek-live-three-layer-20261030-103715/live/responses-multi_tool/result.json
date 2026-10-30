@@ -1,0 +1,36 @@
+{
+  "id": "1714a0d3-6a8d-45f2-9e44-a7a521893a87",
+  "status": "completed",
+  "model": "deepseek-flash",
+  "output": [
+    {
+      "id": "1adb3df5-d156-4f3c-8fb6-9663d8dbb58a",
+      "type": "function_call",
+      "status": "completed",
+      "call_id": "call_00_qlrgSMVVmfDmrzAmyQq57947",
+      "name": "weather",
+      "arguments": "{\"city\": \"上海\"}"
+    },
+    {
+      "id": "0d43762b-e091-4df3-a2d3-0e85dbebf7c7",
+      "type": "function_call",
+      "status": "completed",
+      "call_id": "call_01_ZKQUqP74MjpXKE75MKdo4207",
+      "name": "weather",
+      "arguments": "{\"city\": \"北京\"}"
+    }
+  ],
+  "usage": {
+    "input_tokens": 300,
+    "output_tokens": 58,
+    "total_tokens": 358,
+    "input_tokens_details": {
+      "cached_tokens": 128
+    },
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    }
+  },
+  "error": null,
+  "incomplete_details": null
+}

@@ -1,0 +1,8 @@
+{
+  "name": "chat-line-limit",
+  "source": "offline",
+  "protocol": "chat",
+  "status": "passed",
+  "detail": "expected=sse: line exceeds size limit actual=sse: line exceeds size limit",
+  "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-line-limit/events.jsonl"
+}

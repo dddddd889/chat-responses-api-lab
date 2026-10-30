@@ -1,0 +1,2 @@
+{"time":"2026-10-30T02:37:41.754489Z","kind":"sse","protocol":"chat","event_index":1,"event":"message","object":{"id":"offline","model":"offline","created":1,"object":"chat.completion.chunk","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"a"}]}}]}}
+{"time":"2026-10-30T02:37:41.754533Z","kind":"sse","protocol":"chat","event_index":2,"event":"message","object":{"id":"offline","model":"offline","created":1,"object":"chat.completion.chunk","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"b"}]}}]}}

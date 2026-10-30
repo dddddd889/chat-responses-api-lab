@@ -1,0 +1,23 @@
+{
+  "time": "2026-10-30T02:37:41.75615Z",
+  "kind": "result",
+  "protocol": "responses",
+  "first_event_index": 1,
+  "last_event_index": 1,
+  "object": {
+    "id": "offline",
+    "status": "failed",
+    "model": "",
+    "output": [],
+    "usage": null,
+    "error": {
+      "message": "simulated",
+      "type": "",
+      "code": "server_error",
+      "param": null
+    },
+    "incomplete_details": null
+  },
+  "status": "partial",
+  "error": "sse: response failed: response.failed"
+}

@@ -1,0 +1,40 @@
+{
+  "time": "2026-10-30T02:37:31.353778Z",
+  "kind": "result",
+  "protocol": "responses",
+  "first_event_index": 1,
+  "last_event_index": 25,
+  "object": {
+    "id": "203c4977-e58e-4ef3-8fac-6506a6ec4091",
+    "status": "completed",
+    "model": "deepseek-flash",
+    "output": [
+      {
+        "id": "dcd24b84-ed27-4f6f-b165-0c73ead82830",
+        "type": "message",
+        "status": "completed",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "output_text",
+            "text": "{\"city\":\"上海\",\"count\":2,\"items\":[\"甲\",\"乙\"]}"
+          }
+        ]
+      }
+    ],
+    "usage": {
+      "input_tokens": 55,
+      "output_tokens": 17,
+      "total_tokens": 72,
+      "input_tokens_details": {
+        "cached_tokens": 0
+      },
+      "output_tokens_details": {
+        "reasoning_tokens": 0
+      }
+    },
+    "error": null,
+    "incomplete_details": null
+  },
+  "status": "complete"
+}

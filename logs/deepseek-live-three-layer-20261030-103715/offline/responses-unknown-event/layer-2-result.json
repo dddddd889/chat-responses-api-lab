@@ -1,0 +1,17 @@
+{
+  "time": "2026-10-30T02:37:41.758067Z",
+  "kind": "result",
+  "protocol": "responses",
+  "first_event_index": 1,
+  "last_event_index": 2,
+  "object": {
+    "id": "offline",
+    "status": "completed",
+    "model": "",
+    "output": [],
+    "usage": null,
+    "error": null,
+    "incomplete_details": null
+  },
+  "status": "complete"
+}

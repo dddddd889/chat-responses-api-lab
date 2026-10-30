@@ -1,0 +1,3 @@
+{"time":"2026-10-30T02:37:41.749811Z","kind":"sse","protocol":"chat","event_index":1,"event":"message","object":{"id":"offline","model":"offline","created":1,"object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"你好😀"},"finish_reason":"stop"}]}}
+{"time":"2026-10-30T02:37:41.749822Z","kind":"event","protocol":"chat","event_index":1,"first_event_index":1,"last_event_index":1,"object":{"type":"error","status":"partial","error":"sse: accumulated chat exceeds size limit"}}
+{"time":"2026-10-30T02:37:41.749825Z","kind":"result","protocol":"chat","first_event_index":1,"last_event_index":1,"object":{"id":"","model":"","created":0,"choices":{},"usage":null},"status":"partial","error":"sse: accumulated chat exceeds size limit"}

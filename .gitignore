@@ -1,0 +1,8 @@
+# 仅提交已核对并清理的场景样本；其他本机运行日志继续忽略。
+logs/*
+!logs/deepseek-live-three-layer-20261030-103715/
+*.sse.log
+
+.DS_Store
+__pycache__/
+*.pyc

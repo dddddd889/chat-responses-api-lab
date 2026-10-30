@@ -1,0 +1,8 @@
+{
+  "name": "responses-failed",
+  "source": "offline",
+  "protocol": "responses",
+  "status": "passed",
+  "detail": "expected=sse: response failed actual=sse: response failed: response.failed",
+  "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-failed/events.jsonl"
+}

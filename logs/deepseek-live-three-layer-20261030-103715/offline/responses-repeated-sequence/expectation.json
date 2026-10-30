@@ -1,0 +1,8 @@
+{
+  "name": "responses-repeated-sequence",
+  "source": "offline",
+  "protocol": "responses",
+  "status": "passed",
+  "detail": "expected=sse: invalid response event actual=sse: invalid response event: missing or non-increasing sequence_number",
+  "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-repeated-sequence/events.jsonl"
+}

@@ -1,0 +1,54 @@
+{
+  "time": "2026-10-30T02:37:41.750753Z",
+  "kind": "result",
+  "protocol": "chat",
+  "first_event_index": 1,
+  "last_event_index": 3,
+  "object": {
+    "id": "offline",
+    "model": "offline",
+    "created": 1,
+    "choices": {
+      "0": {
+        "index": 0,
+        "role": "",
+        "content": "候选0完成",
+        "refusal": "",
+        "finish_reason": "tool_calls",
+        "tool_calls": {
+          "3": {
+            "index": 3,
+            "id": "b",
+            "type": "function",
+            "function": {
+              "name": "g",
+              "arguments": "{}"
+            }
+          }
+        },
+        "function_call": null
+      },
+      "2": {
+        "index": 2,
+        "role": "",
+        "content": "候选2完成",
+        "refusal": "",
+        "finish_reason": "tool_calls",
+        "tool_calls": {
+          "3": {
+            "index": 3,
+            "id": "a",
+            "type": "function",
+            "function": {
+              "name": "f",
+              "arguments": "{}"
+            }
+          }
+        },
+        "function_call": null
+      }
+    },
+    "usage": null
+  },
+  "status": "complete"
+}

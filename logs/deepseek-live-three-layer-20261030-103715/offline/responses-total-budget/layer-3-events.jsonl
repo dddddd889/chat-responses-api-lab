@@ -1,0 +1,1 @@
+{"time":"2026-10-30T02:37:41.758342Z","kind":"event","protocol":"responses","event_index":1,"first_event_index":1,"last_event_index":1,"object":{"type":"error","status":"partial","error":"sse: response stream exceeds size limit"}}

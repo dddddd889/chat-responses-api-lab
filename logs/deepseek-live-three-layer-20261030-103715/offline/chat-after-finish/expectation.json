@@ -1,0 +1,8 @@
+{
+  "name": "chat-after-finish",
+  "source": "offline",
+  "protocol": "chat",
+  "status": "passed",
+  "detail": "expected=sse: invalid chat completion delta actual=sse: invalid chat completion delta: choice 0 received content after finish",
+  "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-after-finish/events.jsonl"
+}

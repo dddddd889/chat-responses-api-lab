@@ -1,0 +1,18 @@
+{
+  "time": "2026-10-30T02:37:41.762596Z",
+  "kind": "result",
+  "protocol": "responses",
+  "first_event_index": 1,
+  "last_event_index": 1,
+  "object": {
+    "id": "",
+    "status": "",
+    "model": "",
+    "output": null,
+    "usage": null,
+    "error": null,
+    "incomplete_details": null
+  },
+  "status": "partial",
+  "error": "sse: stream log write failed: permission denied"
+}

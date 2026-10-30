@@ -1,0 +1,52 @@
+{
+  "time": "2026-10-30T02:37:28.173392Z",
+  "kind": "result",
+  "protocol": "chat",
+  "first_event_index": 1,
+  "last_event_index": 19,
+  "object": {
+    "id": "c0731871-7511-4ae6-b98f-1c61a356a124",
+    "model": "deepseek-flash",
+    "created": 1793327847,
+    "choices": {
+      "0": {
+        "index": 0,
+        "role": "assistant",
+        "content": "",
+        "refusal": "",
+        "finish_reason": "tool_calls",
+        "tool_calls": {
+          "0": {
+            "index": 0,
+            "id": "call_00_DA60r88bEhmjFerNoDZ73361",
+            "type": "function",
+            "function": {
+              "name": "weather",
+              "arguments": "{\"city\": \"上海\"}"
+            }
+          },
+          "1": {
+            "index": 1,
+            "id": "call_01_1cQ7vH8V7HTv4cLVhUuf7299",
+            "type": "function",
+            "function": {
+              "name": "weather",
+              "arguments": "{\"city\": \"北京\"}"
+            }
+          }
+        },
+        "function_call": null
+      }
+    },
+    "usage": {
+      "prompt_tokens": 300,
+      "completion_tokens": 58,
+      "total_tokens": 358,
+      "prompt_tokens_details": {
+        "cached_tokens": 128
+      },
+      "completion_tokens_details": null
+    }
+  },
+  "status": "complete"
+}

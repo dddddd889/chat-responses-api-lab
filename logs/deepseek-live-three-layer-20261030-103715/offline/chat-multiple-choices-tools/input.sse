@@ -1,0 +1,6 @@
+data:{"id":"offline","model":"offline","created":1,"object":"chat.completion.chunk","choices":[{"index":2,"delta":{"content":"候选2","tool_calls":[{"index":3,"id":"a","type":"function","function":{"name":"f","arguments":"{"}}]}},{"index":0,"delta":{"content":"候选0","tool_calls":[{"index":3,"id":"b","type":"function","function":{"name":"g","arguments":"{"}}]}}]}
+
+data:{"id":"offline","model":"offline","created":1,"object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"完成","tool_calls":[{"index":3,"function":{"arguments":"}"}}]},"finish_reason":"tool_calls"},{"index":2,"delta":{"content":"完成","tool_calls":[{"index":3,"function":{"arguments":"}"}}]},"finish_reason":"tool_calls"}]}
+
+data:[DONE]
+

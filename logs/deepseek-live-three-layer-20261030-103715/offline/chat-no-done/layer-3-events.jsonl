@@ -1,0 +1,3 @@
+{"time":"2026-10-30T02:37:41.747096Z","kind":"event","protocol":"chat","event_index":1,"first_event_index":1,"last_event_index":1,"object":{"type":"text_delta","choice_index":0,"delta":"你好😀"}}
+{"time":"2026-10-30T02:37:41.7471Z","kind":"event","protocol":"chat","event_index":1,"first_event_index":1,"last_event_index":1,"object":{"type":"choice_done","choice_index":0,"finish_reason":"stop"}}
+{"time":"2026-10-30T02:37:41.747106Z","kind":"event","protocol":"chat","event_index":1,"first_event_index":1,"last_event_index":1,"object":{"type":"error","status":"partial","error":"chat completions: missing [DONE]: unexpected EOF"}}

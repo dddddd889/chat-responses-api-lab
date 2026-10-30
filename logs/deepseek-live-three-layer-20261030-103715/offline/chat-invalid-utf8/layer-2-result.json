@@ -1,0 +1,14 @@
+{
+  "time": "2026-10-30T02:37:41.754142Z",
+  "kind": "result",
+  "protocol": "chat",
+  "object": {
+    "id": "",
+    "model": "",
+    "created": 0,
+    "choices": {},
+    "usage": null
+  },
+  "status": "partial",
+  "error": "sse: invalid UTF-8"
+}

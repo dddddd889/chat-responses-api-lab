@@ -1,0 +1,140 @@
+[
+  {
+    "name": "chat-text",
+    "source": "live",
+    "protocol": "chat",
+    "http_status": 200,
+    "status": "passed",
+    "detail": "文本字节=59 工具调用=0",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/live/chat-text/events.jsonl",
+    "total_tokens": 52
+  },
+  {
+    "name": "chat-json",
+    "source": "live",
+    "protocol": "chat",
+    "http_status": 200,
+    "status": "passed",
+    "detail": "文本字节=49 工具调用=0",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/live/chat-json/events.jsonl",
+    "total_tokens": 72
+  },
+  {
+    "name": "chat-tool",
+    "source": "live",
+    "protocol": "chat",
+    "http_status": 200,
+    "status": "passed",
+    "detail": "文本字节=0 工具调用=1",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/live/chat-tool/events.jsonl",
+    "total_tokens": 321
+  },
+  {
+    "name": "chat-multi_tool",
+    "source": "live",
+    "protocol": "chat",
+    "http_status": 200,
+    "status": "passed",
+    "detail": "文本字节=0 工具调用=2",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/live/chat-multi_tool/events.jsonl",
+    "total_tokens": 358
+  },
+  {
+    "name": "chat-length",
+    "source": "live",
+    "protocol": "chat",
+    "http_status": 200,
+    "status": "passed",
+    "detail": "真实触发长度上限",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/live/chat-length/events.jsonl",
+    "total_tokens": 37
+  },
+  {
+    "name": "chat-thinking",
+    "source": "live",
+    "protocol": "chat",
+    "http_status": 200,
+    "status": "passed",
+    "detail": "文本字节=3 工具调用=0",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/live/chat-thinking/events.jsonl",
+    "total_tokens": 64
+  },
+  {
+    "name": "chat-http_error",
+    "source": "live",
+    "protocol": "chat",
+    "http_status": 400,
+    "status": "passed",
+    "detail": "HTTP 400（正文为 HTTP 错误，非 SSE）",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/live/chat-http_error/events.jsonl"
+  },
+  {
+    "name": "responses-text",
+    "source": "live",
+    "protocol": "responses",
+    "http_status": 200,
+    "status": "passed",
+    "detail": "文本字节=59 工具调用=0",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/live/responses-text/events.jsonl",
+    "total_tokens": 52
+  },
+  {
+    "name": "responses-json",
+    "source": "live",
+    "protocol": "responses",
+    "http_status": 200,
+    "status": "passed",
+    "detail": "文本字节=49 工具调用=0",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/live/responses-json/events.jsonl",
+    "total_tokens": 72
+  },
+  {
+    "name": "responses-tool",
+    "source": "live",
+    "protocol": "responses",
+    "http_status": 200,
+    "status": "passed",
+    "detail": "文本字节=0 工具调用=1",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/live/responses-tool/events.jsonl",
+    "total_tokens": 321
+  },
+  {
+    "name": "responses-multi_tool",
+    "source": "live",
+    "protocol": "responses",
+    "http_status": 200,
+    "status": "passed",
+    "detail": "文本字节=0 工具调用=2",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/live/responses-multi_tool/events.jsonl",
+    "total_tokens": 358
+  },
+  {
+    "name": "responses-length",
+    "source": "live",
+    "protocol": "responses",
+    "http_status": 200,
+    "status": "passed",
+    "detail": "真实触发长度上限",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/live/responses-length/events.jsonl",
+    "total_tokens": 37
+  },
+  {
+    "name": "responses-thinking",
+    "source": "live",
+    "protocol": "responses",
+    "http_status": 200,
+    "status": "passed",
+    "detail": "文本字节=3 工具调用=0",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/live/responses-thinking/events.jsonl",
+    "total_tokens": 71
+  },
+  {
+    "name": "responses-http_error",
+    "source": "live",
+    "protocol": "responses",
+    "http_status": 400,
+    "status": "passed",
+    "detail": "HTTP 400（正文为 HTTP 错误，非 SSE）",
+    "log": "logs/deepseek-live-three-layer-20261030-103715/live/responses-http_error/events.jsonl"
+  }
+]

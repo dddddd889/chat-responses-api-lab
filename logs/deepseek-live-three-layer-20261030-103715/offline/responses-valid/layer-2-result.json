@@ -1,0 +1,34 @@
+{
+  "time": "2026-10-30T02:37:41.755292Z",
+  "kind": "result",
+  "protocol": "responses",
+  "first_event_index": 1,
+  "last_event_index": 1,
+  "object": {
+    "id": "offline",
+    "status": "completed",
+    "model": "",
+    "output": [
+      {
+        "id": "msg",
+        "type": "message",
+        "content": [
+          {
+            "type": "output_text",
+            "text": "你好😀"
+          }
+        ]
+      }
+    ],
+    "usage": {
+      "input_tokens": 1,
+      "output_tokens": 2,
+      "total_tokens": 3,
+      "input_tokens_details": null,
+      "output_tokens_details": null
+    },
+    "error": null,
+    "incomplete_details": null
+  },
+  "status": "complete"
+}

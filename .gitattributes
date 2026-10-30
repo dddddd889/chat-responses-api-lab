@@ -1,0 +1,2 @@
+# SSE 原始样本的 CR/CRLF、末尾空行都是协议数据，按原始字节保存。
+*.sse -text -whitespace

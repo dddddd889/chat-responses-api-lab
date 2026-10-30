@@ -1,0 +1,33 @@
+{
+  "time": "2026-10-30T02:37:26.304735Z",
+  "kind": "result",
+  "protocol": "chat",
+  "first_event_index": 1,
+  "last_event_index": 20,
+  "object": {
+    "id": "0c1c60d4-d3d4-461c-89d3-216fc1e0ac95",
+    "model": "deepseek-flash",
+    "created": 1793327845,
+    "choices": {
+      "0": {
+        "index": 0,
+        "role": "assistant",
+        "content": "{\"city\":\"上海\",\"count\":2,\"items\":[\"甲\",\"乙\"]}",
+        "refusal": "",
+        "finish_reason": "stop",
+        "tool_calls": {},
+        "function_call": null
+      }
+    },
+    "usage": {
+      "prompt_tokens": 55,
+      "completion_tokens": 17,
+      "total_tokens": 72,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "completion_tokens_details": null
+    }
+  },
+  "status": "complete"
+}

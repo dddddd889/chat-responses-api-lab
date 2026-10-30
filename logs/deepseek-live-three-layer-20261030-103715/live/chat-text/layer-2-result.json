@@ -1,0 +1,33 @@
+{
+  "time": "2026-10-30T02:37:25.48806Z",
+  "kind": "result",
+  "protocol": "chat",
+  "first_event_index": 1,
+  "last_event_index": 19,
+  "object": {
+    "id": "292ef09f-d333-4ec3-97ce-7cd3733e2c00",
+    "model": "deepseek-flash",
+    "created": 1793327845,
+    "choices": {
+      "0": {
+        "index": 0,
+        "role": "assistant",
+        "content": "你好，世界 😀\n路径 C:\\temp\\demo，引用\"hello\"。",
+        "refusal": "",
+        "finish_reason": "stop",
+        "tool_calls": {},
+        "function_call": null
+      }
+    },
+    "usage": {
+      "prompt_tokens": 35,
+      "completion_tokens": 17,
+      "total_tokens": 52,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "completion_tokens_details": null
+    }
+  },
+  "status": "complete"
+}

@@ -1,0 +1,25 @@
+{
+  "time": "2026-10-30T02:37:41.759705Z",
+  "kind": "result",
+  "protocol": "responses",
+  "first_event_index": 1,
+  "last_event_index": 4,
+  "object": {
+    "id": "offline",
+    "status": "completed",
+    "model": "",
+    "output": [
+      {
+        "id": "fc",
+        "type": "function_call",
+        "call_id": "call",
+        "name": "f",
+        "arguments": "{\"a\":1}"
+      }
+    ],
+    "usage": null,
+    "error": null,
+    "incomplete_details": null
+  },
+  "status": "complete"
+}

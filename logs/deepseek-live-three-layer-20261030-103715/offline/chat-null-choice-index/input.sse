@@ -1,0 +1,2 @@
+data:{"id":"offline","model":"offline","created":1,"object":"chat.completion.chunk","choices":[{"index":null,"delta":{}}]}
+

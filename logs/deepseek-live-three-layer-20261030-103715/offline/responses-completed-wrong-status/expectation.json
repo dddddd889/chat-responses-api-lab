@@ -1,0 +1,8 @@
+{
+  "name": "responses-completed-wrong-status",
+  "source": "offline",
+  "protocol": "responses",
+  "status": "passed",
+  "detail": "expected=sse: invalid response event actual=sse: invalid response event: response.completed: response status mismatch",
+  "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-completed-wrong-status/events.jsonl"
+}

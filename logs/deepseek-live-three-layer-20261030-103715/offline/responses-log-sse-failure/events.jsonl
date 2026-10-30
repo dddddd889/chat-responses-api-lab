@@ -1,0 +1,2 @@
+{"time":"2026-10-30T02:37:41.762587Z","kind":"event","protocol":"responses","event_index":1,"first_event_index":1,"last_event_index":1,"object":{"type":"error","status":"partial","error":"sse: stream log write failed: permission denied"}}
+{"time":"2026-10-30T02:37:41.762596Z","kind":"result","protocol":"responses","first_event_index":1,"last_event_index":1,"object":{"id":"","status":"","model":"","output":null,"usage":null,"error":null,"incomplete_details":null},"status":"partial","error":"sse: stream log write failed: permission denied"}

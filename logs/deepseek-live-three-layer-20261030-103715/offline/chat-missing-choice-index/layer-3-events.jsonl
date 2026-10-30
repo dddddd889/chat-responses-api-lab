@@ -1,0 +1,1 @@
+{"time":"2026-10-30T02:37:41.74775Z","kind":"event","protocol":"chat","event_index":1,"first_event_index":1,"last_event_index":1,"object":{"type":"error","status":"partial","error":"sse: invalid chat completion chunk: sse: invalid chat completion chunk: choice index must be a non-negative integer"}}

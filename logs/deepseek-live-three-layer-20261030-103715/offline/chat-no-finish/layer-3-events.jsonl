@@ -1,0 +1,2 @@
+{"time":"2026-10-30T02:37:41.748844Z","kind":"event","protocol":"chat","event_index":1,"first_event_index":1,"last_event_index":1,"object":{"type":"text_delta","choice_index":0,"delta":"half"}}
+{"time":"2026-10-30T02:37:41.748852Z","kind":"event","protocol":"chat","event_index":2,"first_event_index":1,"last_event_index":2,"object":{"type":"error","status":"partial","error":"sse: incomplete chat completion: choice 0 missing finish_reason"}}

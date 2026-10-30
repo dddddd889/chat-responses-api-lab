@@ -1,0 +1,8 @@
+{
+  "name": "responses-incomplete",
+  "source": "offline",
+  "protocol": "responses",
+  "status": "passed",
+  "detail": "expected=sse: response incomplete actual=sse: response incomplete: response.incomplete",
+  "log": "logs/deepseek-live-three-layer-20261030-103715/offline/responses-incomplete/events.jsonl"
+}

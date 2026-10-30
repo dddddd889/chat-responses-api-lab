@@ -1,0 +1,8 @@
+{
+  "name": "chat-incomplete-tool",
+  "source": "offline",
+  "protocol": "chat",
+  "status": "passed",
+  "detail": "expected=sse: incomplete chat completion actual=sse: incomplete chat completion: choice 0 tool 0 missing id/type/name/arguments",
+  "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-incomplete-tool/events.jsonl"
+}

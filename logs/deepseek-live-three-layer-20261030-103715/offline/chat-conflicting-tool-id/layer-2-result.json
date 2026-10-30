@@ -1,0 +1,36 @@
+{
+  "time": "2026-10-30T02:37:41.75455Z",
+  "kind": "result",
+  "protocol": "chat",
+  "first_event_index": 1,
+  "last_event_index": 2,
+  "object": {
+    "id": "offline",
+    "model": "offline",
+    "created": 1,
+    "choices": {
+      "0": {
+        "index": 0,
+        "role": "",
+        "content": "",
+        "refusal": "",
+        "finish_reason": null,
+        "tool_calls": {
+          "0": {
+            "index": 0,
+            "id": "a",
+            "type": "",
+            "function": {
+              "name": "",
+              "arguments": ""
+            }
+          }
+        },
+        "function_call": null
+      }
+    },
+    "usage": null
+  },
+  "status": "partial",
+  "error": "sse: invalid chat completion delta: conflicting tool id"
+}

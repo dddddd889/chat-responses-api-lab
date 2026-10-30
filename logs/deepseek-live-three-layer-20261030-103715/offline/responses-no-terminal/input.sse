@@ -1,0 +1,3 @@
+event:response.created
+data:{"response":{"id":"offline","status":"in_progress","output":[]},"sequence_number":0,"type":"response.created"}
+

@@ -1,0 +1,4 @@
+data:{"id":"offline","model":"offline","created":1,"object":"chat.completion.chunk","choices":[{"index":0,"delta":{"refusal":"无法回答"},"finish_reason":"content_filter"}]}
+
+data:[DONE]
+

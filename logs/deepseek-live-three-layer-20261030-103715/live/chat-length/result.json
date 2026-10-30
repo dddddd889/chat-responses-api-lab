@@ -1,0 +1,25 @@
+{
+  "id": "220d598a-f379-411d-8334-3e5a8d6339f6",
+  "model": "deepseek-flash",
+  "created": 1793327848,
+  "choices": {
+    "0": {
+      "index": 0,
+      "role": "assistant",
+      "content": "123456789101112131415161718192021222324252627282",
+      "refusal": "",
+      "finish_reason": "length",
+      "tool_calls": {},
+      "function_call": null
+    }
+  },
+  "usage": {
+    "prompt_tokens": 21,
+    "completion_tokens": 16,
+    "total_tokens": 37,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "completion_tokens_details": null
+  }
+}

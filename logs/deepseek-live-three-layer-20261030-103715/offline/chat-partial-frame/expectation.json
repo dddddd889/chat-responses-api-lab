@@ -1,0 +1,8 @@
+{
+  "name": "chat-partial-frame",
+  "source": "offline",
+  "protocol": "chat",
+  "status": "passed",
+  "detail": "expected=unexpected EOF actual=unexpected EOF",
+  "log": "logs/deepseek-live-three-layer-20261030-103715/offline/chat-partial-frame/events.jsonl"
+}

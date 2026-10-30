@@ -1,0 +1,35 @@
+{
+  "id": "26fa67b5-30be-4bd4-a054-b258e3192600",
+  "model": "deepseek-flash",
+  "created": 1793327846,
+  "choices": {
+    "0": {
+      "index": 0,
+      "role": "assistant",
+      "content": "",
+      "refusal": "",
+      "finish_reason": "tool_calls",
+      "tool_calls": {
+        "0": {
+          "index": 0,
+          "id": "call_00_6pnUGnfVqjZLpVThZ5fN2623",
+          "type": "function",
+          "function": {
+            "name": "weather",
+            "arguments": "{\"city\": \"上海\"}"
+          }
+        }
+      },
+      "function_call": null
+    }
+  },
+  "usage": {
+    "prompt_tokens": 290,
+    "completion_tokens": 31,
+    "total_tokens": 321,
+    "prompt_tokens_details": {
+      "cached_tokens": 128
+    },
+    "completion_tokens_details": null
+  }
+}

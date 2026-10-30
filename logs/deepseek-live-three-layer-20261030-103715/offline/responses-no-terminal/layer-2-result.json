@@ -1,0 +1,18 @@
+{
+  "time": "2026-10-30T02:37:41.755562Z",
+  "kind": "result",
+  "protocol": "responses",
+  "first_event_index": 1,
+  "last_event_index": 1,
+  "object": {
+    "id": "offline",
+    "status": "in_progress",
+    "model": "",
+    "output": [],
+    "usage": null,
+    "error": null,
+    "incomplete_details": null
+  },
+  "status": "partial",
+  "error": "responses: missing terminal event: unexpected EOF"
+}

@@ -1,0 +1,12 @@
+event:response.output_item.added
+data:{"item":{"id":"fc","type":"function_call","call_id":"call","name":"f","arguments":""},"output_index":0,"sequence_number":0,"type":"response.output_item.added"}
+
+event:response.function_call_arguments.delta
+data:{"delta":"{","item_id":"fc","output_index":0,"sequence_number":1,"type":"response.function_call_arguments.delta"}
+
+event:response.function_call_arguments.done
+data:{"arguments":"{\"a\":1}","item_id":"fc","output_index":0,"sequence_number":2,"type":"response.function_call_arguments.done"}
+
+event:response.completed
+data:{"response":{"id":"offline","status":"completed","output":[{"id":"fc","type":"function_call","call_id":"call","name":"f","arguments":"{\"a\":1}"}]},"sequence_number":3,"type":"response.completed"}
+

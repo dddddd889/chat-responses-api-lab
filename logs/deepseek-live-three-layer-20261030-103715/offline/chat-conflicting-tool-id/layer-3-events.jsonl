@@ -1,0 +1,2 @@
+{"time":"2026-10-30T02:37:41.754526Z","kind":"event","protocol":"chat","event_index":1,"first_event_index":1,"last_event_index":1,"object":{"type":"tool_start","choice_index":0,"tool_index":0,"call_id":"a"}}
+{"time":"2026-10-30T02:37:41.754542Z","kind":"event","protocol":"chat","event_index":2,"first_event_index":1,"last_event_index":2,"object":{"type":"error","status":"partial","error":"sse: invalid chat completion delta: conflicting tool id"}}

@@ -1,0 +1,16 @@
+{
+  "time": "2026-10-30T02:37:41.749577Z",
+  "kind": "result",
+  "protocol": "chat",
+  "first_event_index": 1,
+  "last_event_index": 1,
+  "object": {
+    "id": "",
+    "model": "",
+    "created": 0,
+    "choices": {},
+    "usage": null
+  },
+  "status": "partial",
+  "error": "sse: invalid chat completion delta: duplicate choice index 0"
+}
