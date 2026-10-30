@@ -171,6 +171,41 @@ test('工具参数中途保持原始字符串，当前字段路径与终点一�
 test('差异比较忽略对象属性顺序，并转义模型文本与字段路径',() => {
   assert.equal(V.differences({a:1,b:2},{b:2,a:1}).length,0);
   const scene = {protocol:'chat',sse:[{object:{id:'x',model:'m',created:1,choices:[{index:0,delta:{content:'<img src=x onerror=alert(1)>'}}]}}],result:{object:{}}};
-  const html = V.comparison(scene,{step:1,max:1});
+  const html = V.renderDiff(scene,{step:1,max:1});
   assert.ok(!html.includes('<img'));assert.ok(html.includes('&lt;img'));
+});
+
+// 结构演示使用真实调用 ID；绝不生成声称已写入的序号、执行结果或下一轮请求。
+const journeyContext = {window:{StreamCore:C}};
+vm.runInNewContext(fs.readFileSync(path.join(__dirname,'web/journey.js'),'utf8'),journeyContext);
+const J = journeyContext.window.StreamJourney;
+test('完整过程投影保留关联 ID 与工具参数，消息原样包入 EventLog 片段',() => {
+  for (const protocol of ['chat','responses']) {
+    const scene = scenes.find(item => item.id === protocol+'-multi_tool');
+    const before = JSON.stringify(scene);
+    const data = J.prepare(scene,'0:1');
+    const selected = data.piBlocks[data.selectedIndex];
+    assert.equal(selected.id,protocol === 'responses' ? `${data.selected.callID}|${data.selected.itemID}` : data.selected.callID);
+    assert.deepEqual(plain(selected.arguments),{city:'北京'});
+    assert.equal(data.message.content.length,2);
+    assert.deepEqual(plain(JSON.parse(data.message.content[1].arguments)),{city:'北京'});
+    assert.equal(data.event.data.message,data.message);
+    for (const field of ['seq','time']) assert.equal(data.event[field],undefined);
+    assert.equal(data.message.id,undefined);
+    assert.equal(data.message.source,undefined);
+    assert.equal(JSON.stringify(scene),before);
+    assert.ok(J.render(scene,'eventlog','0:1').includes('没有产生真实 EventLog'));
+    assert.ok(J.render(scene,'request','0:1').includes('未发送第二次模型请求'));
+  }
+});
+
+test('缺少工具、截断或非法参数时不制造可执行的 Harness 消息',() => {
+  const text = scenes.find(item => item.id==='chat-text');
+  assert.ok(J.prepare(text).blocked);
+  const scene = JSON.parse(JSON.stringify(scenes.find(item => item.id==='chat-tool')));
+  scene.result.object.choices[0].tool_calls[0].function.arguments = '{';
+  const invalid = J.prepare(scene);
+  assert.ok(invalid.blocked);assert.deepEqual(plain(invalid.piBlocks),[]);
+  scene.result.status = 'partial';
+  assert.ok(J.prepare(scene).blocked.includes('没有完整结束'));
 });

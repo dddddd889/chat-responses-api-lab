@@ -4,6 +4,7 @@
   const C = window.StreamCore;
   const U = window.StreamUsageView;
   const V = window.StreamSnapshotView;
+  const J = window.StreamJourney;
   const base = document.body.dataset.base;
   const dataset = window.SSE_DATA;
   const scenes = dataset.scenarios.map(C.prepare);
@@ -14,7 +15,7 @@
   const counterpart = scenes.find(item => item.kind === scene.kind && item.protocol !== scene.protocol);
   const params = new URLSearchParams(location.search);
   const app = document.getElementById('app');
-  const state = {cursor:params.has('step') ? Math.max(0,Math.min(scene.sse.length,Number(params.get('step')) || 0)) : scene.sse.length, tab:['replay','compare','result'].includes(params.get('tab')) ? params.get('tab') : 'replay', filter:'all', search:'', sourceMode:'json', snapshotMode:['json','visual','diff'].includes(params.get('view')) ? params.get('view') : 'diff', playing:false, interval:650, timer:null};
+  const state = {cursor:params.has('step') ? Math.max(0,Math.min(scene.sse.length,Number(params.get('step')) || 0)) : scene.sse.length, tab:['replay','journey','compare','result'].includes(params.get('tab')) ? params.get('tab') : 'replay', journeyStage:J.stages.some(stage => stage.id === params.get('stage')) ? params.get('stage') : 'eventlog', journeyTool:params.get('call'), filter:'all', search:'', sourceMode:'json', resultMode:params.get('result_view') === 'json' ? 'json' : 'diff', snapshotMode:['json','visual','diff'].includes(params.get('view')) ? params.get('view') : 'diff', playing:false, interval:650, timer:null};
   let toastTimer;
   const icon = (name,size=15) => {
     const paths = {play:'<path d="m8 5 11 7-11 7Z"/>',pause:'<path d="M8 5v14M16 5v14"/>',back:'<path d="M6 5v14m12-14L8 12l10 7Z"/>',prev:'<path d="m15 5-7 7 7 7"/>',next:'<path d="m9 5 7 7-7 7"/>',code:'<path d="m8 6-6 6 6 6m8-12 6 6-6 6m-5 2 2-16"/>',flow:'<rect x="3" y="4" width="6" height="5" rx="1"/><rect x="15" y="15" width="6" height="5" rx="1"/><path d="M6 9v8h9m-1-4 4 4-4 4"/>',braces:'<path d="M9 3H7v6l-3 3 3 3v6h2m6-18h2v6l3 3-3 3v6h-2"/>',copy:'<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M15 8V3H3v12h5"/>',download:'<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',compare:'<path d="M12 3v18M4 7h4v10H4M16 7h4v10h-4"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/>',check:'<path d="m5 12 4 4L19 6"/>',link:'<path d="m10 13 4-4m-6 7-2 2a4 4 0 0 1-6-6l5-5a4 4 0 0 1 6 0m2 1 2-2a4 4 0 0 1 6 6l-5 5a4 4 0 0 1-6 0"/>'};
@@ -59,6 +60,7 @@
       ${U.definitions(scene)}
       <div class="tabs" role="tablist" aria-label="日志查看模式">
         <button class="tab" role="tab" id="tab-replay" aria-controls="pane-replay" data-tab="replay">${icon('flow')}逐步回放<span class="tiny-count">${scene.sse.length}</span></button>
+        <button class="tab" role="tab" id="tab-journey" aria-controls="pane-journey" data-tab="journey">${icon('flow')}完整过程</button>
         <button class="tab" role="tab" id="tab-compare" aria-controls="pane-compare" data-tab="compare">${icon('compare')}协议对照</button>
         <button class="tab" role="tab" id="tab-result" aria-controls="pane-result" data-tab="result">${icon('braces')}完整结果</button>
       </div>
@@ -70,12 +72,12 @@
         <div class="workbench">
           <section class="panel"><div class="panel-head"><span class="layer-number">01</span><span class="panel-title">上游 SSE<small>FULL EVENT TYPE / JSON</small></span><span class="panel-count">${scene.sse.length}</span></div><div class="panel-description">显示完整事件类型与原始 data JSON。点击序号联动当前累积状态。</div><div class="event-list" id="sse-list"></div><div class="inspector"><div class="inspector-head"><span id="source-title">事件检查器</span><div><button data-action="source-mode" id="source-mode-button">查看 SSE 帧</button> <button data-action="copy" data-content="source" aria-label="复制当前上游事件">${icon('copy',11)}</button></div></div><pre class="code" id="source-code" tabindex="0" aria-label="上游事件 JSON"></pre></div></section>
           <section class="panel"><div class="panel-head"><span class="layer-number two">02</span><span class="panel-title">拼接状态<small>ACCUMULATED OBJECT</small></span><span class="panel-count" id="snapshot-count"></span><div class="panel-actions"><button data-action="snapshot-mode" aria-pressed="false">JSON</button><button data-action="snapshot-diff" aria-pressed="true" aria-label="查看 Git diff">Diff</button><button data-action="copy" data-content="snapshot" aria-label="${V.copyLabel}">${icon('copy',11)}</button></div></div><div class="panel-description">随左侧 SSE 更新；与右侧完整结果使用相同字段布局，可逐字段对照。</div><div class="snapshot-body" id="snapshot-body"></div><div class="snapshot-foot">delta 按归属追加，done 全文替换。完整参数仍是 JSON 字符串，工具不会自动执行。</div></section>
-          <section class="panel final-result-panel"><div class="panel-head"><span class="layer-number three">03</span><span class="panel-title">完整结果<small>FINAL RESULT</small></span><div class="panel-actions"><button data-action="copy" data-content="result" aria-label="复制完整结果 JSON">${icon('copy',11)}</button></div></div><div class="panel-description">同一次请求保存的完整结果，作为固定参照，不随回放变化。</div><div class="final-result-body"><div class="snapshot-json-label">${scene.protocol === 'chat' ? '项目 Go ChatResult · choices/tool_calls 按编号保存为对象' : '项目 Go ResponseObject · 已建模字段'}</div><div class="final-result-code"><pre class="code" tabindex="0" aria-label="日志完整结果 JSON">${C.highlight(C.pretty(scene.result.object))}</pre></div></div></section>
+          <section class="panel final-result-panel"><div class="panel-head"><span class="layer-number three">03</span><span class="panel-title">完整结果<small>FINAL RESULT</small></span><div class="panel-actions"><button data-action="result-mode" aria-pressed="false">JSON</button><button data-action="copy" data-content="result" aria-label="复制完整结果 JSON">${icon('copy',11)}</button></div></div><div class="panel-description">Diff 随进度对比当前状态与日志终点；JSON 查看保存的完整原文。</div><div class="final-result-body" id="final-result-body"></div></section>
         </div>
         <div class="workbench-caption"><span>${icon('link',12)} 序号是本地 event_index；上游 sequence_number 保留在 JSON 中。</span><span>回放速率为演示速度，不代表真实网络耗时。</span></div>
-        <section class="panel result-comparison"><div class="panel-head"><span class="panel-title">拼接状态 → 完整结果<small>FIELD COMPARISON</small></span></div><p class="panel-description">${scene.protocol === 'chat' ? '当前与最终对象都使用项目 Go ChatResult 结构；choices/tool_calls 按编号保存为对象，并非 OpenAI 原始响应数组。' : '当前与最终对象都使用项目 Go ResponseObject 已建模字段；上游完整 JSON 及扩展字段保留在事件检查器。'} 下表随所选 SSE 展示本条处理前后的字段值；右侧完整结果保留日志终点。</p><div id="snapshot-comparison"></div></section>
         <div class="flow-strip"><b>resp.Body</b><span class="arrow">→</span><span>SSE 解帧</span><span class="arrow">→</span><span>Chat / Responses 解码</span><span class="arrow">→</span><span>按 index 合并</span><span class="arrow">→</span><b>完整结果</b></div>`}
       </section>
+      <section id="pane-journey" role="tabpanel" aria-labelledby="tab-journey" hidden>${J.render(scene,state.journeyStage,state.journeyTool)}</section>
       <section id="pane-compare" role="tabpanel" aria-labelledby="tab-compare" hidden>${renderCompare()}</section>
       <section id="pane-result" role="tabpanel" aria-labelledby="tab-result" hidden>${renderResult()}</section>
       <footer class="page-footer"><div>真实样本 · ${dataset.model} · 所有交互均在浏览器内进行</div><div class="footer-actions"><button data-action="copy-link">${icon('link',11)} 复制当前视图链接</button><button data-action="download" data-content="combined">${icon('download',11)} 下载完整日志</button></div></footer>`;
@@ -104,7 +106,10 @@
     document.getElementById('source-mode-button').textContent = state.sourceMode === 'json' ? '查看 SSE 帧' : '查看 JSON';
     const value = source ? source.object ?? source.data : null;
     document.getElementById('source-code').innerHTML = source ? state.sourceMode === 'json' ? C.highlight(C.pretty(value)) : e(asFrame(source)) : '<span class="json-key">点击播放或选择一条事件开始。</span>';
-    document.getElementById('snapshot-comparison').innerHTML = V.comparison(scene,snapshot);
+    document.getElementById('final-result-body').innerHTML = V.renderResult(scene,snapshot,state.resultMode);
+    const resultToggle = document.querySelector('[data-action="result-mode"]');
+    resultToggle.textContent = state.resultMode === 'diff' ? 'JSON' : 'Diff';
+    resultToggle.setAttribute('aria-pressed',String(state.resultMode === 'json'));
     document.getElementById('snapshot-count').textContent = `#${state.cursor}`;
     document.getElementById('snapshot-body').innerHTML = state.snapshotMode === 'diff' ? V.renderDiff(scene,snapshot) : state.snapshotMode === 'json' ? V.render(scene,snapshot) : renderSnapshot(snapshot);
     const snapshotToggle = document.querySelector('[data-action="snapshot-mode"]');
@@ -166,7 +171,7 @@
   function selectTab(tab) {
     state.tab = tab;
     if (tab !== 'replay') stopPlayback();
-    for (const name of ['replay','compare','result']) {
+    for (const name of ['replay','journey','compare','result']) {
       const button = document.getElementById(`tab-${name}`);
       button.classList.toggle('active',name === tab);button.setAttribute('aria-selected',String(name === tab));button.tabIndex = name === tab ? 0 : -1;
       document.getElementById(`pane-${name}`).hidden = name !== tab;
@@ -237,18 +242,28 @@
     if (button.dataset.filter) {state.filter = button.dataset.filter;renderNav();return;}
     if (button.dataset.tab) {selectTab(button.dataset.tab);return;}
     const action = button.dataset.action;
+    if (action === 'journey-stage' || action === 'journey-tool') {
+      if (action === 'journey-stage') state.journeyStage = button.dataset.stage;
+      else state.journeyTool = button.dataset.tool;
+      document.getElementById('pane-journey').innerHTML = J.render(scene,state.journeyStage,state.journeyTool);
+      // 重绘后恢复到相同的阶段或调用按钮，保持键盘操作连续。
+      const selected = [...document.querySelectorAll(`#pane-journey [data-action="${action}"]`)].find(item => action === 'journey-stage' ? item.dataset.stage === state.journeyStage : item.dataset.tool === state.journeyTool);
+      selected?.focus({preventScroll:true});
+    }
+    if (action === 'journey-replay') {setCursor(button.dataset.index);selectTab('replay');}
     if (action === 'play') togglePlayback();
     if (action === 'reset') {stopPlayback();setCursor(0);}
     if (action === 'prev') {stopPlayback();setCursor(state.cursor-1);}
     if (action === 'next') {stopPlayback();setCursor(state.cursor+1);}
     if (action === 'jump') {stopPlayback();setCursor(button.dataset.index);}
+    if (action === 'result-mode') {state.resultMode = state.resultMode === 'diff' ? 'json' : 'diff';renderPlayback();}
     if (action === 'snapshot-diff') {state.snapshotMode = state.snapshotMode === 'diff' ? 'json' : 'diff';renderPlayback();}
     if (action === 'snapshot-mode') {state.snapshotMode = state.snapshotMode === 'json' ? 'visual' : 'json';renderPlayback();}
     if (action === 'source-mode') {state.sourceMode = state.sourceMode === 'json' ? 'frame' : 'json';renderPlayback();}
     if (action === 'copy') copy(content(button.dataset.content).text);
     if (action === 'download') download(button.dataset.content);
     if (action === 'copy-link') {
-      const url = new URL(location.href);url.searchParams.set('step',state.cursor);url.searchParams.set('tab',state.tab);url.searchParams.set('view',state.snapshotMode);copy(url.href);
+      const url = new URL(location.href);url.searchParams.set('step',state.cursor);url.searchParams.set('tab',state.tab);url.searchParams.set('view',state.snapshotMode);url.searchParams.set('result_view',state.resultMode);url.searchParams.set('stage',state.journeyStage);if (state.journeyTool) url.searchParams.set('call',state.journeyTool);copy(url.href);
     }
   });
   document.getElementById('scenario-search').addEventListener('input',event => {state.search = event.target.value;renderNav();});
@@ -257,7 +272,7 @@
   document.addEventListener('keydown',event => {
     const tab = event.target.closest('[role="tab"]');
     if (tab && ['ArrowLeft','ArrowRight'].includes(event.key)) {
-      event.preventDefault();const names = ['replay','compare','result'];const index = names.indexOf(state.tab);const next = names[(index+(event.key === 'ArrowRight' ? 1 : 2))%3];selectTab(next);document.getElementById(`tab-${next}`).focus();return;
+      event.preventDefault();const names = ['replay','journey','compare','result'];const index = names.indexOf(state.tab);const next = names[(index+(event.key === 'ArrowRight' ? 1 : names.length-1))%names.length];selectTab(next);document.getElementById(`tab-${next}`).focus();return;
     }
     if (state.tab !== 'replay' || scene.httpError || event.target.closest('input,textarea,select,button,a,summary')) return;
     if (['ArrowLeft','ArrowRight'].includes(event.key)) {event.preventDefault();stopPlayback();setCursor(state.cursor+(event.key === 'ArrowRight' ? 1 : -1));}

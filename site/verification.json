@@ -1,14 +1,14 @@
 {
   "pages": 15,
   "individual_scenarios": 14,
-  "data_tests_passed": 25,
-  "dom_tests_passed": 24,
+  "data_tests_passed": 27,
+  "dom_tests_passed": 25,
   "http_resources_checked": 22,
   "original_files_unchanged": 419,
   "old_markdown_files_unchanged": 3,
   "new_model_requests": 0,
-  "screen_qa": "responses_tool_three_columns_sticky_controls_and_git_diff_checked",
-  "hosting": "local_static_only_sites_tools_unavailable",
+  "screen_qa": "tool_call_journey_and_live_final_diff_checked",
+  "hosting": "github_pages",
   "cache_metrics": {
     "cached_tokens": 128,
     "uncached_tokens": 172,
@@ -27,5 +27,9 @@
   "full_event_type_visible": true,
   "dynamic_event_before_after": true,
   "sticky_playback_controls": true,
-  "git_style_snapshot_diff": true
+  "git_style_snapshot_diff": true,
+  "tool_call_journey": true,
+  "journey_capture": "api_only_with_source_projections",
+  "final_result_live_diff": true,
+  "redundant_comparison_panel_removed": true
 }

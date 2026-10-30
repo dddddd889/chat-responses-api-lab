@@ -35,6 +35,8 @@ async function open(id,t,view='json') {
   // 常规测试显式查看 JSON；差异视图由专门用例覆盖默认状态与切换。
   const diffToggle = dom.window.document.querySelector('[data-action="snapshot-diff"]');
   if (view === 'json' && diffToggle?.getAttribute('aria-pressed') === 'true') diffToggle.click();
+  const resultToggle = dom.window.document.querySelector('[data-action="result-mode"]');
+  if (view === 'json' && resultToggle?.getAttribute('aria-pressed') === 'false') resultToggle.click();
   return dom;
 }
 
@@ -103,8 +105,8 @@ test('播放会推进序号，暂停后停止，切换标签保留正确可访�
   assert.equal(document.querySelector('.playback-step b').textContent,paused);
   const tab = document.querySelector('#tab-replay');
   tab.dispatchEvent(new window.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
-  assert.equal(document.querySelector('#tab-compare').getAttribute('aria-selected'),'true');
-  assert.equal(document.querySelector('#pane-compare').hidden,false);
+  assert.equal(document.querySelector('#tab-journey').getAttribute('aria-selected'),'true');
+  assert.equal(document.querySelector('#pane-journey').hidden,false);
 });
 
 // 同一个命中量在概览、回放和协议对照中采用相同口径。
@@ -147,7 +149,7 @@ test('JSON 视图使用日志同结构，当前累积值可直接对照最终结
     const parsed = JSON.parse(document.querySelector('.snapshot-json .code').textContent);
     assert.deepEqual(parsed,prepared.result.object);
     assert.equal(parsed.preview,undefined);
-    assert.ok(document.querySelector('#snapshot-comparison').textContent.includes('逐字段一致'));
+    assert.ok(document.querySelector('.result-match').textContent.includes('逐字段一致'));
     assert.deepEqual(JSON.parse(document.querySelector('[aria-label="日志完整结果 JSON"]').textContent),prepared.result.object);
     assert.equal(document.querySelector('[data-action="snapshot-mode"]').getAttribute('aria-pressed'),'true');
     document.querySelector('[data-content="snapshot"]').click();await Promise.resolve();
@@ -156,7 +158,7 @@ test('JSON 视图使用日志同结构，当前累积值可直接对照最终结
     const preview = JSON.parse(document.querySelector('.snapshot-json .code').textContent);
     assert.equal(preview.usage,null);
     assert.equal(preview.id,'');
-    assert.equal(document.querySelector('#snapshot-comparison').textContent.includes('逐字段一致'),false);
+    assert.equal(document.querySelector('.result-match').textContent.includes('逐字段一致'),false);
     assert.deepEqual(Object.keys(preview),Object.keys(parsed));
     assert.ok(document.querySelector('.snapshot-json-label').textContent.includes('相同字段结构'));
     document.querySelector('[data-action="snapshot-mode"]').click();
@@ -172,26 +174,6 @@ test('明确 0 命中显示 0%，HTTP 没有 usage 时显示未知',{skip:!modul
   const unknown = await open('chat-http_error',t);
   assert.equal(unknown.window.document.querySelector('[data-metric="cache"] [data-cache="cached"]').textContent,'—');
   assert.equal(unknown.window.document.querySelector('[data-metric="cache"] [data-cache="rate"]').textContent,'—');
-});
-
-// 选择参数增量时，当前值、最终值与上游事件应能通过同一路径关联。
-test('逐步选择 SSE 会更新处理前后值，完整结果保持不变，终点显示一致',{skip:!modulePath},async t => {
-  for (const protocol of ['chat','responses']) {
-    const dom = await open(protocol+'-tool',t), document = dom.window.document;
-    const scene = C.prepare(meta.scenarios.find(scene => scene.id === protocol+'-tool'));
-    const finalJSON = document.querySelector('[aria-label="日志完整结果 JSON"]').textContent;
-    const first = scene.business.find(record => record.object.type === 'tool_arguments_delta');
-    document.querySelector(`.sse-row[data-index="${first.event_index}"]`).click();
-    const panel = document.querySelector('#snapshot-comparison');
-    const expected = protocol === 'chat' ? '$.choices.0.tool_calls.0.function.arguments' : '$.output[0].arguments';
-    assert.ok(panel.querySelector('.comparison-update').textContent.includes(expected));
-    assert.ok(panel.querySelector('.comparison-table').textContent.includes(expected));
-    assert.equal(document.querySelector('[aria-label="日志完整结果 JSON"]').textContent,finalJSON);
-    document.querySelector(`.sse-row[data-index="${scene.sse.length}"]`).click();
-    assert.ok(panel.textContent.includes('逐字段一致'));
-    if (protocol === 'responses') assert.ok(panel.querySelector('.comparison-table').textContent.includes('completed'));
-    else assert.equal(panel.querySelector('.comparison-table'),null);
-  }
 });
 
 // 完整事件类型直接可见；同一条参数增量同时关联左侧事件与中间累积值。
@@ -212,21 +194,30 @@ test('上游列表和检查器显示完整 event type，Chat event 与 JSON obje
   assert.ok(chatDocument.querySelector('.event-row-detail').textContent.includes('JSON object: chat.completion.chunk'));
 });
 
-// 同一参数的前值和后值都应逐条推进，日志终点仍在第三列固定保留。
-test('字段表的处理前后值均随连续 SSE 更新',{skip:!modulePath},async t => {
-  const dom = await open('responses-tool',t), document = dom.window.document;
-  const scene = C.prepare(meta.scenarios.find(scene => scene.id === 'responses-tool'));
-  const deltas = scene.sse.filter(record => record.object?.type === 'response.function_call_arguments.delta');
-  const final = document.querySelector('.final-result-panel .code').textContent;
-  let accumulated = '';
-  for (const record of deltas) {
-    document.querySelector(`.sse-row[data-index="${record.event_index}"]`).click();
-    const row = [...document.querySelectorAll('.comparison-table tbody tr')].find(row => row.cells[0].textContent === '$.output[0].arguments');
-    assert.ok(row);
-    assert.equal(row.cells[1].textContent,accumulated ? JSON.stringify(accumulated,null,2) : '尚无此字段');
-    accumulated += record.object.delta;
-    assert.equal(row.cells[2].textContent,JSON.stringify(accumulated,null,2));
-    assert.equal(document.querySelector('.final-result-panel .code').textContent,final);
+// 右列的红色当前值随回放变化，绿色终点值逐步归并为相同行。
+test('完整结果 Diff 随连续 SSE 更新，到终点差异归零且可切换原始 JSON',{skip:!modulePath},async t => {
+  for (const protocol of ['chat','responses']) {
+    const dom = await open(protocol+'-tool',t,'diff'), document = dom.window.document;
+    const scene = C.prepare(meta.scenarios.find(scene => scene.id === protocol+'-tool'));
+    const deltas = scene.sse.filter(record => protocol === 'responses'
+      ? record.object?.type === 'response.function_call_arguments.delta'
+      : record.object?.choices?.some(choice => choice.delta?.tool_calls?.some(tool => tool.function?.arguments)));
+    let accumulated = '';
+    for (const record of deltas) {
+      document.querySelector(`.sse-row[data-index="${record.event_index}"]`).click();
+      const rows = [...document.querySelectorAll('#final-result-body .diff-line')];
+      const current = JSON.parse(rows.filter(node => !node.classList.contains('diff-add')).map(node => node.textContent.slice(1)).join('\n'));
+      const final = JSON.parse(rows.filter(node => !node.classList.contains('diff-delete')).map(node => node.textContent.slice(1)).join('\n'));
+      accumulated += protocol === 'responses' ? record.object.delta : record.object.choices[0].delta.tool_calls[0].function.arguments;
+      assert.equal(protocol === 'responses' ? current.output[0].arguments : current.choices[0].tool_calls[0].function.arguments,accumulated);
+      assert.deepEqual(final,scene.result.object);
+    }
+    document.querySelector(`.sse-row[data-index="${scene.sse.length}"]`).click();
+    assert.equal(document.querySelectorAll('#final-result-body .diff-add,#final-result-body .diff-delete').length,0);
+    assert.ok(document.querySelector('.result-match').textContent.includes('逐字段一致'));
+    assert.equal(document.querySelector('.result-comparison'),null);
+    document.querySelector('[data-action="result-mode"]').click();
+    assert.deepEqual(JSON.parse(document.querySelector('#final-result-body .code').textContent),scene.result.object);
   }
 });
 
@@ -240,15 +231,14 @@ test('默认 Git diff 标记本条增删行，JSON 视图和复制仍保留完�
       ? record.object?.type === 'response.function_call_arguments.delta'
       : record.object?.choices?.some(choice => choice.delta?.tool_calls?.some(tool => tool.function?.arguments)));
     document.querySelector(`.sse-row[data-index="${delta.event_index}"]`).click();
-    const after = document.querySelectorAll('.snapshot-diff .diff-add');
+    const after = document.querySelectorAll('#snapshot-body .snapshot-diff .diff-add');
     assert.ok(after.length > 0);
     assert.ok([...after].some(node => node.textContent.includes('arguments')));
-    const rows = [...document.querySelectorAll('.snapshot-diff .diff-line')];
+    const rows = [...document.querySelectorAll('#snapshot-body .snapshot-diff .diff-line')];
     const newJSON = JSON.parse(rows.filter(node => !node.classList.contains('diff-delete')).map(node => node.textContent.slice(1)).join('\n'));
     const oldJSON = JSON.parse(rows.filter(node => !node.classList.contains('diff-add')).map(node => node.textContent.slice(1)).join('\n'));
     assert.notDeepEqual(oldJSON,newJSON);
-    assert.ok(document.querySelector('.comparison-table .change-before'));
-    assert.ok(document.querySelector('.comparison-table .change-after'));
+    assert.ok(document.querySelector('[aria-label="完整结果 Git diff"]'));
     let copied;
     Object.defineProperty(window.navigator,'clipboard',{value:{writeText:async value => {copied=value;}},configurable:true});
     document.querySelector('[data-content="snapshot"]').click();await Promise.resolve();
@@ -257,9 +247,62 @@ test('默认 Git diff 标记本条增删行，JSON 视图和复制仍保留完�
     assert.deepEqual(JSON.parse(document.querySelector('#snapshot-body .code').textContent),newJSON);
     document.querySelector('[data-action="snapshot-diff"]').click();
     document.querySelector('[data-action="reset"]').click();
-    assert.equal(document.querySelectorAll('.snapshot-diff .diff-add,.snapshot-diff .diff-delete').length,0);
+    assert.equal(document.querySelectorAll('#snapshot-body .snapshot-diff .diff-add,#snapshot-body .snapshot-diff .diff-delete').length,0);
     document.querySelector(`.sse-row[data-index="${scene.sse.length}"]`).click();
-    if (protocol === 'chat') assert.equal(document.querySelectorAll('.snapshot-diff .diff-add,.snapshot-diff .diff-delete').length,0);
-    else assert.ok([...document.querySelectorAll('.snapshot-diff .diff-add')].some(node => node.textContent.includes('completed')));
+    if (protocol === 'chat') assert.equal(document.querySelectorAll('#snapshot-body .snapshot-diff .diff-add,#snapshot-body .snapshot-diff .diff-delete').length,0);
+    else assert.ok([...document.querySelectorAll('#snapshot-body .snapshot-diff .diff-add')].some(node => node.textContent.includes('completed')));
   }
+});
+
+// 从选中调用一路追踪到消息与事件外壳，并明确区分结构演示和实际记录。
+test('完整过程按阶段关联同一工具调用，结构演示和未采集状态清楚可见',{skip:!modulePath},async t => {
+  for (const protocol of ['chat','responses']) {
+    const dom = await open(protocol+'-multi_tool',t), window = dom.window, document = window.document;
+    const scene = C.prepare(meta.scenarios.find(scene => scene.id===protocol+'-multi_tool'));
+    document.querySelector('[data-tab="journey"]').click();
+    assert.equal(document.getElementById('pane-journey').hidden,false);
+    assert.equal(document.querySelectorAll('.journey-rail button').length,5);
+    assert.equal(document.querySelectorAll('.journey-calls button').length,2);
+    document.querySelector('[data-action="journey-tool"][data-tool="0:1"]').click();
+    assert.ok(document.querySelector('.journey-identity').textContent.includes(C.finalView(scene).tools[1].callID));
+    const message = JSON.parse(document.querySelector('[aria-label="Harness assistant 消息片段"]').textContent);
+    const event = JSON.parse(document.querySelector('[aria-label="EventLog assistant/message 结构片段"]').textContent);
+    assert.deepEqual(event.data.message,message);assert.equal(event.seq,undefined);
+    assert.ok(document.querySelector('.journey-note').textContent.includes('没有产生真实 EventLog'));
+    document.querySelector('[data-action="journey-stage"][data-stage="adapter"]').click();
+    const pi = JSON.parse(document.querySelector('[aria-label="pi-ai 工具结束事件片段"]').textContent);
+    const harness = JSON.parse(document.querySelector('[aria-label="Harness 工具块结束事件"]').textContent);
+    assert.deepEqual(JSON.parse(harness.block.arguments),pi.toolCall.arguments);
+    assert.equal(harness.block.id,pi.toolCall.id);
+    document.querySelector('[data-action="journey-stage"][data-stage="tool"]').click();
+    assert.ok(document.querySelector('.journey-empty').textContent.includes('未采集'));
+    assert.equal(document.querySelector('[aria-label="工具执行结果 JSON"]'),null);
+    document.querySelector('[data-action="journey-stage"][data-stage="request"]').click();
+    assert.ok(document.getElementById('pane-journey').textContent.includes('未发送第二次模型请求'));
+    document.querySelector('[data-action="journey-stage"][data-stage="response"]').click();
+    document.querySelector('[data-action="journey-replay"]').click();
+    assert.equal(document.getElementById('pane-replay').hidden,false);
+    assert.ok(document.getElementById('source-code').textContent.includes(C.finalView(scene).tools[1].callID));
+    document.querySelector('[data-tab="journey"]').click();
+    assert.equal(document.querySelector('[data-action="journey-tool"][data-tool="0:1"]').getAttribute('aria-pressed'),'true');
+    let copied;
+    Object.defineProperty(window.navigator,'clipboard',{value:{writeText:async value => {copied=value;}},configurable:true});
+    document.querySelector('[data-action="copy-link"]').click();await Promise.resolve();
+    assert.equal(new URL(copied).searchParams.get('tab'),'journey');
+    assert.equal(new URL(copied).searchParams.get('call'),'0:1');
+  }
+});
+
+// 新增完整过程后，四个主标签仍可用方向键往返并正确循环。
+test('四个主标签的键盘导航可循环，完整过程不会破坏原标签切换',{skip:!modulePath},async t => {
+  const dom = await open('responses-tool',t), window = dom.window, document = window.document;
+  const names = ['replay','journey','compare','result'];
+  for (let index=0;index<names.length;index++) {
+    const current = document.getElementById('tab-'+names[index]);
+    current.dispatchEvent(new window.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
+    const next = document.getElementById('tab-'+names[(index+1)%names.length]);
+    assert.equal(next.getAttribute('aria-selected'),'true');assert.equal(document.activeElement,next);
+  }
+  document.getElementById('tab-replay').dispatchEvent(new window.KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true}));
+  assert.equal(document.getElementById('tab-result').getAttribute('aria-selected'),'true');
 });

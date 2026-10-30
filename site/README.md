@@ -23,8 +23,10 @@ python3 -m http.server 8765 --bind 127.0.0.1 --directory dist
 - 逐步回放支持播放、暂停、速度、单步按钮、进度条，以及焦点不在表单控件时的左右方向键。回放控制条滚动时吸顶，查看三列及字段变化时也可随时操作。
 - 三列依次展示“上游 SSE、拼接状态、完整结果”。上游列表展示完整 Responses type；Chat 展示 SSE event（默认 message），并单独标注 JSON object。点击事件联动当前累积对象，也可以查看按事件重建的 SSE 帧。重建帧保留语义，不冒充原始网络字节。
 - 第二列默认展示 Git 风格 diff，红色减号为本条处理前，绿色加号为本条处理后；比较上一条 SSE 与当前 SSE 的累积对象。点击 JSON 可查看完整对象，逐条重放 SSE；从开头到终点都采用日志结果的字段布局，不读取最终日志反填。Chat 使用项目 Go ChatResult（choices/tool_calls 是按编号保存的对象，并非官方响应数组），Responses 使用 Go ResponseObject 已建模字段。差异标记随当前事件重新计算，复制按钮始终复制完整累积对象 JSON；可切换“内容摘要”查看正文、工具与缓存指标。
-- “拼接状态 → 完整结果”显示本条 SSE 更新的字段路径及处理前、处理后的值，两列均跟随回放变化，前后值分别使用红色与绿色底色标记；另用状态提示当前累积对象与右侧日志终点是否一致，到终点应显示“逐字段一致”。日志完整结果独立保留，不随回放变化。Responses 的终止事件使用事件内 response 完整值校准；这属于流协议本身，不是从日志结果反填。
-- 第三列固定展示同一次请求保存的 Go 累积器完整结果；中间列随 SSE 更新，到终点可与第三列直接逐字段对照。统一业务事件不再作为页面列展示，原始日志和下载数据仍保留。
+- 第三列默认展示“当前累积对象 → 日志完整结果”的 Git diff，随回放变化，到终点差异归零；点击 JSON 查看固定日志原文。原来下方重复的“拼接状态 → 完整结果”表格已移除。Responses 的终止事件使用事件内 response 完整值校准，不从日志结果反填。
+- 新增“完整过程”视图：模型响应 → 适配器转换 → 写入会话 → 执行工具 → 下一次请求。可选择单个调用并追踪上游 ID、pi-ai/Harness ID、工具参数和 EventLog 外壳；支持跳回该调用开始的 SSE，复制链接保留阶段与调用选择。
+- 现有样本只有 API 实测数据。pi-ai 工具块、Harness 消息及 EventLog 片段是依据源码的结构演示，省略未采集的 id/source/replayState、seq/time/turn/step 等字段；没有实际运行适配器或写入会话。工具执行与第二次请求明确标为未采集，不生成模拟执行结果或已发送请求。
+- 转换规则核对自 `deepseek-ai/deepseek-harness` 提交 `687f282e8625c6b8d11ff58211a90524be2e4317` 的 `llm-pi-ai/src/stream.ts`、`agent-loop/src/agent.ts`、`agent-loop/src/tool-calls.ts` 及 `session/src/index.ts`；界面提供固定提交的源码链接。采集真实运行时还需记录实际 pi-ai 版本、provider 和模型配置。
 - “协议对照”并排查看同类型的两次独立请求；“完整结果”保留项目 Go 累积器保存的日志对象、复制和 JSON 下载。
 - HTTP 400、Chat length、Responses incomplete 分开说明。usage 未到达时显示未知，不显示伪造的零用量。
 
